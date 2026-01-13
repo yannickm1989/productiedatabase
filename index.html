@@ -21,7 +21,6 @@ body {
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-/* TITELBALK */
 .title-bar {
     position: relative;
     display: flex;
@@ -40,7 +39,6 @@ body {
     height: 40px;
 }
 
-/* TABS */
 .tab-buttons {
     display: flex;
     gap: 10px;
@@ -54,13 +52,20 @@ body {
     border-radius: 8px;
     background: #e0e0e0;
     cursor: pointer;
-    font-size: 15px;
 }
 
 .tab-buttons button.active {
     background: #28a745;
     color: white;
     font-weight: bold;
+}
+
+.tab {
+    display: none;
+}
+
+.tab.active {
+    display: block;
 }
 
 label {
@@ -83,13 +88,7 @@ button.action {
     color: white;
     border: none;
     border-radius: 10px;
-    font-size: 16px;
     cursor: pointer;
-}
-
-.output {
-    margin-top: 10px;
-    font-weight: bold;
 }
 
 .result {
@@ -99,13 +98,21 @@ button.action {
     border-radius: 6px;
 }
 
-/* TAB CONTENT */
-.tab {
-    display: none;
+.result button {
+    margin-top: 8px;
+    margin-right: 5px;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
 }
 
-.tab.active {
-    display: block;
+.edit { background: #1976d2; color: white; }
+.delete { background: #c62828; color: white; }
+
+.output {
+    margin-top: 10px;
+    font-weight: bold;
 }
 </style>
 </head>
@@ -124,7 +131,7 @@ button.action {
     <button id="tabZoeken">Artikel opzoeken</button>
 </div>
 
-<!-- TAB 1: INVOER -->
+<!-- TAB INVOER -->
 <div id="invoer" class="tab active">
 
 <label>Artikelnummer</label><input id="artikelnummer">
@@ -150,7 +157,7 @@ button.action {
 <div id="output" class="output"></div>
 </div>
 
-<!-- TAB 2: ZOEKEN -->
+<!-- TAB ZOEKEN -->
 <div id="zoeken" class="tab">
 
 <label>Zoek op artikelnummer of omschrijving</label>
@@ -165,7 +172,7 @@ button.action {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBtV-MNtSxf7mJ5RM5dS_5MeRdpcOMy6a4",
@@ -179,35 +186,22 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+let editId = null;
+
 /* TABS */
-const tabInvoerBtn = document.getElementById("tabInvoer");
-const tabZoekenBtn = document.getElementById("tabZoeken");
-const invoerTab = document.getElementById("invoer");
-const zoekenTab = document.getElementById("zoeken");
+tabInvoer.onclick = () => wisselTab(true);
+tabZoeken.onclick = () => wisselTab(false);
 
-tabInvoerBtn.onclick = () => {
-    tabInvoerBtn.classList.add("active");
-    tabZoekenBtn.classList.remove("active");
-    invoerTab.classList.add("active");
-    zoekenTab.classList.remove("active");
-};
+function wisselTab(invoer) {
+    tabInvoer.classList.toggle("active", invoer);
+    tabZoeken.classList.toggle("active", !invoer);
+    document.getElementById("invoer").classList.toggle("active", invoer);
+    document.getElementById("zoeken").classList.toggle("active", !invoer);
+}
 
-tabZoekenBtn.onclick = () => {
-    tabZoekenBtn.classList.add("active");
-    tabInvoerBtn.classList.remove("active");
-    zoekenTab.classList.add("active");
-    invoerTab.classList.remove("active");
-};
-
-/* OPSLAAN */
+/* OPSLAAN / BIJWERKEN */
 window.opslaan = async () => {
-    if (!artikelnummer.value || !omschrijving.value) {
-        output.style.color = "red";
-        output.innerText = "Artikelnummer en omschrijving zijn verplicht";
-        return;
-    }
-
-    await addDoc(collection(db, "productie"), {
+    const data = {
         artikelnummer: artikelnummer.value,
         omschrijving: omschrijving.value,
         blikinhoud: blikinhoud.value,
@@ -225,12 +219,25 @@ window.opslaan = async () => {
         wrap: wrap.value,
         perPak: perPak.value,
         perTray: perTray.value,
-        plaatsTussenleggers: plaatsTussenleggers.value,
-        created: new Date()
-    });
+        plaatsTussenleggers: plaatsTussenleggers.value
+    };
+
+    if (!data.artikelnummer || !data.omschrijving) {
+        output.style.color = "red";
+        output.innerText = "Artikelnummer en omschrijving verplicht";
+        return;
+    }
+
+    if (editId) {
+        await updateDoc(doc(db, "productie", editId), data);
+        output.innerText = "Artikel bijgewerkt";
+        editId = null;
+    } else {
+        await addDoc(collection(db, "productie"), data);
+        output.innerText = "Artikel opgeslagen";
+    }
 
     output.style.color = "green";
-    output.innerText = "Artikel opgeslagen";
 };
 
 /* ZOEKEN */
@@ -239,26 +246,48 @@ window.zoekArtikel = async () => {
     const zoek = zoekveld.value.toLowerCase();
     const snap = await getDocs(collection(db, "productie"));
 
-    snap.forEach(doc => {
-        const d = doc.data();
+    snap.forEach(d => {
+        const data = d.data();
         if (
-            d.artikelnummer.toLowerCase().includes(zoek) ||
-            d.omschrijving.toLowerCase().includes(zoek)
+            data.artikelnummer.toLowerCase().includes(zoek) ||
+            data.omschrijving.toLowerCase().includes(zoek)
         ) {
             resultaten.innerHTML += `
             <div class="result">
-                <b>${d.artikelnummer}</b><br>
-                ${d.omschrijving}<br><br>
-                <small>
-                Blikinhoud: ${d.blikinhoud}<br>
-                Deksel: ${d.deksel}<br>
-                Blik: ${d.blik}<br>
-                Tray: ${d.tray}<br>
-                Pallet: ${d.pallet}
-                </small>
+                <b>${data.artikelnummer}</b><br>
+                ${data.omschrijving}<br>
+                <button class="edit" onclick="bewerk('${d.id}')">Bewerk</button>
+                <button class="delete" onclick="verwijder('${d.id}')">Verwijder</button>
             </div>`;
         }
     });
+};
+
+/* BEWERKEN */
+window.bewerk = async (id) => {
+    const snap = await getDocs(collection(db, "productie"));
+    snap.forEach(d => {
+        if (d.id === id) {
+            const data = d.data();
+            editId = id;
+            for (const key in data) {
+                if (document.getElementById(key)) {
+                    document.getElementById(key).value = data[key];
+                }
+            }
+            wisselTab(true);
+            output.style.color = "blue";
+            output.innerText = "Je bewerkt dit artikel";
+        }
+    });
+};
+
+/* VERWIJDEREN */
+window.verwijder = async (id) => {
+    if (confirm("Artikel verwijderen?")) {
+        await deleteDoc(doc(db, "productie", id));
+        zoekArtikel();
+    }
 };
 </script>
 
