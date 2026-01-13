@@ -51,9 +51,9 @@ button.action {
     <button id="tabZoeken">Artikel opzoeken</button>
 </div>
 
+<!-- TAB INVOER -->
 <div id="invoer" class="tab active">
-<label>Artikelnummer</label>
-<input id="artikelnummer">
+<label>Artikelnummer</label><input id="artikelnummer">
 
 <label>Omschrijving</label><input id="omschrijving">
 <label>Blikinhoud</label><input id="blikinhoud">
@@ -77,6 +77,7 @@ button.action {
 <div id="output" class="output"></div>
 </div>
 
+<!-- TAB ZOEKEN -->
 <div id="zoeken" class="tab">
 <label>Zoek op artikelnummer of omschrijving</label>
 <input id="zoekveld">
@@ -104,13 +105,11 @@ tabZoeken.onclick = () => switchTab(false);
 function switchTab(invoer) {
     tabInvoer.classList.toggle("active", invoer);
     tabZoeken.classList.toggle("active", !invoer);
-    invoer && (document.getElementById("invoer").classList.add("active"));
-    !invoer && (document.getElementById("zoeken").classList.add("active"));
-    invoer || document.getElementById("invoer").classList.remove("active");
-    invoer && document.getElementById("zoeken").classList.remove("active");
+    document.getElementById("invoer").classList.toggle("active", invoer);
+    document.getElementById("zoeken").classList.toggle("active", !invoer);
 }
 
-/* AUTOMATISCH INVULLEN */
+/* AUTOMATISCH INVULLEN BIJ ARTIKELNUMMER */
 artikelnummer.addEventListener("blur", async () => {
     const snap = await getDocs(collection(db, "productie"));
     snap.forEach(d => {
@@ -128,7 +127,7 @@ artikelnummer.addEventListener("blur", async () => {
     });
 });
 
-/* OPSLAAN */
+/* OPSLAAN / UPDATE */
 window.opslaan = async () => {
     const data = {
         artikelnummer: artikelnummer.value,
@@ -151,6 +150,12 @@ window.opslaan = async () => {
         plaatsTussenleggers: plaatsTussenleggers.value
     };
 
+    if (!data.artikelnummer || !data.omschrijving) {
+        output.style.color = "red";
+        output.innerText = "Artikelnummer en omschrijving verplicht";
+        return;
+    }
+
     if (editId) {
         await updateDoc(doc(db, "productie", editId), data);
         output.innerText = "Artikel bijgewerkt";
@@ -159,7 +164,13 @@ window.opslaan = async () => {
         await addDoc(collection(db, "productie"), data);
         output.innerText = "Nieuw artikel opgeslagen";
     }
+
     output.style.color = "green";
+
+    // Velden leegmaken na opslaan
+    const velden = ["artikelnummer","omschrijving","blikinhoud","deksel","blik","secFolie","terFolie","topFolie",
+                    "pallet","tussenlegger","stapelprogramma","aantalLagen","perLaag","tray","wrap","perPak","perTray","plaatsTussenleggers"];
+    velden.forEach(id => { document.getElementById(id).value = ""; });
 };
 
 /* ZOEKEN + VERWIJDEREN */
