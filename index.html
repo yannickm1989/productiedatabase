@@ -147,7 +147,7 @@ const colRef = collection(db,"Productiedatabase");
 
 let editId = null;
 
-// Alle velden, inclusief Verpakker 1 en 2
+// Alle velden
 const fields = [
  {k:"artikelnummer",l:"Artikelnummer"},
  {k:"omschrijving",l:"Omschrijving"},
@@ -170,7 +170,7 @@ const fields = [
  {k:"hoeveelPerLaag",l:"Hoeveel per laag"}
 ];
 
-// Maak invoer-tab
+// Invoer-tab
 const invoer = document.getElementById("invoerTab");
 fields.forEach(f=>{
     invoer.innerHTML += `<label>${f.l}</label><input id="${f.k}">`;
@@ -237,31 +237,31 @@ window.save = async ()=>{
    await addDoc(colRef,data)
  }
  fields.forEach(f=>document.getElementById(f.k).value="")
-document.getElementById("artikelnummer").classList.remove("existing-article","new-article");
+ document.getElementById("artikelnummer").classList.remove("existing-article","new-article");
  alert("Opgeslagen")
 }
 
 // Zoeken
 window.zoek = async ()=>{
- const q=document.getElementById("zoek").value.toUpperCase()
+ const q=document.getElementById("zoek").value.trim().toUpperCase()
  const res=document.getElementById("result")
  res.innerHTML=""
+ if(!q) return
  const snap=await getDocs(colRef)
  snap.forEach(d=>{
-  const data=d.data()
-  if(data.artikelnummer?.includes(q)||data.omschrijving?.toUpperCase().includes(q)){
-   let html=`<div class="result-card">`
-   if(data.omschrijving) html+=`<div class="omschrijving">${data.omschrijving}</div><hr>`
-   fields.forEach(f=>{
-    if(f.k==="omschrijving") return
-    if(data[f.k]) html+=`<b>${f.l}:</b> ${data[f.k]}<br>`
-   })
-   html+=`
-   <button onclick="bewerk('${d.id}')">Bewerk</button>
-   <button onclick="verwijder('${d.id}')">Verwijder</button>
-   </div>`
-   res.innerHTML+=html
-  }
+   const data=d.data()
+   if(data.artikelnummer?.toUpperCase().includes(q) || data.omschrijving?.toUpperCase().includes(q)){
+     let html=`<div class="result-card">`
+     if(data.omschrijving) html+=`<div class="omschrijving">${data.omschrijving}</div><hr>`
+     fields.forEach(f=>{
+       if(f.k==="omschrijving") return
+       if(data[f.k]) html+=`<b>${f.l}:</b> ${data[f.k]}<br>`
+     })
+     html+=`<button onclick="bewerk('${d.id}')">Bewerk</button> 
+            <button onclick="verwijder('${d.id}')">Verwijder</button>`
+     html+=`</div>`
+     res.innerHTML+=html
+   }
  })
 }
 
