@@ -6,7 +6,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBtV-MNtSxf7mJ5RM5dS_5MeRdpcOMy6a4",
@@ -45,6 +45,16 @@ const fields = [
   { key:"hoeveelPerLaag", label:"Hoeveel per laag" }
 ];
 
+window.onload = () => {
+  const container = document.getElementById("formFields");
+  fields.forEach(f => {
+    const input = document.createElement("input");
+    input.id = f.key;
+    input.placeholder = f.label;
+    container.appendChild(input);
+  });
+};
+
 window.saveArticle = async () => {
   let data = {};
   fields.forEach(f => {
@@ -60,13 +70,9 @@ window.saveArticle = async () => {
     await addDoc(colRef, data);
   }
 
-  clearForm();
+  fields.forEach(f => document.getElementById(f.key).value = "");
   alert("Opgeslagen");
 };
-
-function clearForm(){
-  fields.forEach(f => document.getElementById(f.key).value = "");
-}
 
 window.searchArticle = async () => {
   const zoek = document.getElementById("zoek").value.trim().toUpperCase();
@@ -83,10 +89,7 @@ window.searchArticle = async () => {
       let html = "<div class='card'>";
 
       if (data.omschrijving) {
-        html += `
-          <div class="omschrijving">${data.omschrijving}</div>
-          <hr>
-        `;
+        html += `<div class="omschrijving">${data.omschrijving}</div><hr>`;
       }
 
       fields.forEach(f => {
@@ -131,7 +134,7 @@ window.deleteArticle = async (id) => {
 body { font-family: Arial; margin:20px }
 input { width:100%; margin-bottom:6px }
 .card { border:1px solid #ccc; padding:10px; margin-bottom:10px }
-.omschrijving { text-align:center; font-weight:bold; font-size:16px; }
+.omschrijving { text-align:center; font-weight:bold; font-size:16px }
 button { margin-top:8px; margin-right:6px }
 </style>
 </head>
@@ -141,10 +144,8 @@ button { margin-top:8px; margin-right:6px }
 <h2>Productiedatabase</h2>
 
 <h3>Invoer</h3>
-<div>
-  ${fields.map(f => `<input id="${f.key}" placeholder="${f.label}">`).join("")}
-  <button onclick="saveArticle()">Opslaan</button>
-</div>
+<div id="formFields"></div>
+<button onclick="saveArticle()">Opslaan</button>
 
 <hr>
 
