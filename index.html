@@ -181,29 +181,37 @@ window.zoekArtikel = async () => {
         if (data.artikelnummer.toLowerCase().includes(zoek) ||
             data.omschrijving.toLowerCase().includes(zoek)) {
 
-            resultaten.innerHTML += `
-            <div class="result">
-                <b>Artikelnummer:</b> ${data.artikelnummer}<br>
-                <b>Omschrijving:</b> ${data.omschrijving}<br>
-                <b>Blikinhoud:</b> ${data.blikinhoud}<br>
-                <b>Deksel:</b> ${data.deksel}<br>
-                <b>Blik:</b> ${data.blik}<br>
-                <b>Sec. folie:</b> ${data.secFolie}<br>
-                <b>Tert. folie:</b> ${data.terFolie}<br>
-                <b>Topfolie:</b> ${data.topFolie}<br>
-                <b>Pallet:</b> ${data.pallet}<br>
-                <b>Tussenlegger:</b> ${data.tussenlegger}<br>
-                <b>Stapelprogramma:</b> ${data.stapelprogramma}<br>
-                <b>Aantal lagen:</b> ${data.aantalLagen}<br>
-                <b>Per laag:</b> ${data.perLaag}<br>
-                <b>Tray:</b> ${data.tray}<br>
-                <b>Wrap:</b> ${data.wrap}<br>
-                <b>Hoeveel per pak:</b> ${data.perPak}<br>
-                <b>Per tray / doos:</b> ${data.perTray}<br>
-                <b>Plaats tussenleggers:</b> ${data.plaatsTussenleggers}<br>
-                <button class="edit" onclick="bewerk('${d.id}')">Bewerk</button>
-                <button class="delete" onclick="verwijder('${d.id}')">Verwijder</button>
-            </div>`;
+            let html = "<div class='result'>";
+            for (const key in data) {
+                if (data[key]) { // alleen tonen als er een waarde is
+                    let label = key;
+                    switch(key) {
+                        case "artikelnummer": label = "Artikelnummer"; break;
+                        case "omschrijving": label = "Omschrijving"; break;
+                        case "blikinhoud": label = "Blikinhoud"; break;
+                        case "deksel": label = "Deksel"; break;
+                        case "blik": label = "Blik"; break;
+                        case "secFolie": label = "Sec. folie"; break;
+                        case "terFolie": label = "Tert. folie"; break;
+                        case "topFolie": label = "Topfolie"; break;
+                        case "pallet": label = "Pallet"; break;
+                        case "tussenlegger": label = "Tussenlegger"; break;
+                        case "stapelprogramma": label = "Stapelprogramma"; break;
+                        case "aantalLagen": label = "Aantal lagen"; break;
+                        case "perLaag": label = "Per laag"; break;
+                        case "tray": label = "Tray"; break;
+                        case "wrap": label = "Wrap"; break;
+                        case "perPak": label = "Hoeveel per pak"; break;
+                        case "perTray": label = "Per tray / doos"; break;
+                        case "plaatsTussenleggers": label = "Plaats tussenleggers"; break;
+                    }
+                    html += `<b>${label}:</b> ${data[key]}<br>`;
+                }
+            }
+            html += `<button class="edit" onclick="bewerk('${d.id}')">Bewerk</button>
+                     <button class="delete" onclick="verwijder('${d.id}')">Verwijder</button>
+                     </div>`;
+            resultaten.innerHTML += html;
         }
     });
 };
