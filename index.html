@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Productie Invoer</title>
+<style>
+body {
+    font-family: Arial;
+    padding: 20px;
+    background: #f5f5f5;
+}
+.app {
+    max-width: 650px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+label {
+    font-weight: bold;
+    display:block;
+    margin-top:10px;
+}
+input, select {
+    width: 100%;
+    padding: 8px;
+    margin-top:5px;
+}
+button {
+    padding: 10px;
+    width: 100%;
+    font-size: 18px;
+    margin-top:15px;
+    border: none;
+    border-radius: 10px;
+    background: #28a745;
+    color: white;
+    cursor:pointer;
+}
+#output {
+    margin-top: 20px;
+    font-size: 16px;
+    color: green;
+}
+.tab-buttons {
+    display:flex;
+    gap:10px;
+    margin-bottom:15px;
+}
+.tab-buttons button {
+    flex:1;
+    font-size:16px;
+    background:#e0e0e0;
+    color:#333;
+    padding:8px;
+    border-radius:8px;
+    border:none;
+    cursor:pointer;
+}
+.tab-buttons button.active {
+    background:#28a745;
+    color:white;
+    font-weight:bold;
+}
+.title-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #28a745;
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+.title-bar img {
+    position: absolute;
+    left: 10px;
+    height: 50px;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+th, td {
+    border: 1px solid #ccc;
+    padding: 5px;
+    font-size: 14px;
+    text-align: left;
+}
+th {
+    background: #28a745;
+    color: white;
+}
+</style>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+</head>
+
+<body>
+<div class="app">
+
+<div class="title-bar">
+    <img src="ym.png" alt="YM">
+    <h2>Productie Invoer</h2>
+</div>
+
+<div class="tab-buttons">
+    <button id="tab1" class="active">Invoer</button>
+    <button id="tab2">Overzicht</button>
+</div>
+
+<div id="tabContent">
+
+<!-- INVOER TAB -->
+<div id="invoerTab">
+<label>Artikelnummer:</label>
+<input type="text" id="artikelnummer">
+
+<label>Omschrijving:</label>
+<input type="text" id="omschrijving">
+
+<label>Blikinhoud (cl):</label>
+<input type="number" id="blikinhoud">
+
+<label>Deksel:</label>
+<input type="text" id="deksel">
+
+<label>Blik:</label>
+<input type="text" id="blik">
+
+<label>Secundaire folie:</label>
+<input type="text" id="secFolie">
+
+<label>Tertiaire folie:</label>
+<input type="text" id="terFolie">
+
+<label>Tertiaire topfolie:</label>
+<input type="text" id="topFolie">
+
+<label>Pallet:</label>
+<input type="text" id="pallet">
+
+<label>Tussenlegger:</label>
+<input type="text" id="tussenlegger">
+
+<label>Stapelprogramma:</label>
+<input type="text" id="stapelprogramma">
+
+<label>Aantal lagen:</label>
+<input type="number" id="aantalLagen">
+
+<label>Hoeveel per laag:</label>
+<input type="number" id="perLaag">
+
+<label>Tray:</label>
+<input type="text" id="tray">
+
+<label>Wrap:</label>
+<input type="text" id="wrap">
+
+<label>Hoeveel per pak:</label>
+<input type="number" id="perPak">
+
+<label>Hoeveel per tray/doos:</label>
+<input type="number" id="perTray">
+
+<label>Plaats tussenleggers:</label>
+<input type="text" id="plaatsTussenleggers">
+
+<button type="button" onclick="opslaan()">Opslaan</button>
+<div id="output"></div>
+</div>
+
+<!-- OVERZICHT TAB -->
+<div id="overzichtTab" style="display:none">
+    <label>Filter op artikelnummer:</label>
+    <input type="text" id="filterArtikel" placeholder="Artikelnummer invoeren">
+    <button type="button" onclick="laadRecords()">Toepassen filter</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Artikel</th>
+                <th>Omschrijving</th>
+                <th>Blikinhoud</th>
+                <th>Deksel</th>
+                <th>Blik</th>
+                <th>Sec. folie</th>
+                <th>Ter. folie</th>
+                <th>Topfolie</th>
+                <th>Pallet</th>
+                <th>Tussenlegger</th>
+                <th>Stapelprog.</th>
+                <th>Lagen</th>
+                <th>Per laag</th>
+                <th>Tray</th>
+                <th>Wrap</th>
+                <th>Per pak</th>
+                <th>Per tray/doos</th>
+                <th>Plaats tussenleggers</th>
+            </tr>
+        </thead>
+        <tbody id="recordsTable">
+        </tbody>
+    </table>
+</div>
+
+</div>
+</div>
+
+<script>
+// Firebase configuratie
+const firebaseConfig = {
+    apiKey: "JOUW_API_KEY",
+    authDomain: "JOUW_PROJECT.firebaseapp.com",
+    projectId: "JOUW_PROJECT_ID",
+    storageBucket: "JOUW_PROJECT.appspot.com",
+    messagingSenderId: "JOUW_SENDER_ID",
+    appId: "JOUW_APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// TABBLADEN
+const tab1 = document.getElementById("tab1");
+const tab2 = document.getElementById("tab2");
+const invoerTab = document.getElementById("invoerTab");
+const overzichtTab = document.getElementById("overzichtTab");
+
+tab1.onclick = () => {
+    tab1.classList.add("active"); tab2.classList.remove("active");
+    invoerTab.style.display = "block"; overzichtTab.style.display = "none";
+};
+tab2.onclick = () => {
+    tab2.classList.add("active"); tab1.classList.remove("active");
+    invoerTab.style.display = "none"; overzichtTab.style.display = "block";
+    laadRecords();
+};
+
+// OPSLAAN FUNCTIE
+function opslaan() {
+    const data = {
+        artikelnummer: document.getElementById("artikelnummer").value,
+        omschrijving: document.getElementById("omschrijving").value,
+        blikinhoud: parseFloat(document.getElementById("blikinhoud").value),
+        deksel: document.getElementById("deksel").value,
+        blik: document.getElementById("blik").value,
+        secFolie: document.getElementById("secFolie").value,
+        terFolie: document.getElementById("terFolie").value,
+        topFolie: document.getElementById("topFolie").value,
+        pallet: document.getElementById("pallet").value,
+        tussenlegger: document.getElementById("tussenlegger").value,
+        stapelprogramma: document.getElementById("stapelprogramma").value,
+        aantalLagen: parseInt(document.getElementById("aantalLagen").value),
+        perLaag: parseInt(document.getElementById("perLaag").value),
+        tray: document.getElementById("tray").value,
+        wrap: document.getElementById("wrap").value,
+        perPak: parseInt(document.getElementById("perPak").value),
+        perTray: parseInt(document.getElementById("perTray").value),
+        plaatsTussenleggers: document.getElementById("plaatsTussenleggers").value,
+        timestamp: new Date()
+    };
+
+    if(!data.artikelnummer || !data.omschrijving) {
+        alert("Artikelnummer en omschrijving zijn verplicht");
+        return;
+    }
+
+    db.collection("productie").add(data)
+    .then(() => {
+        document.getElementById("output").innerText = "Gegevens succesvol opgeslagen!";
+        invoerTab.querySelectorAll("input").forEach(i => i.value = "");
+    })
+    .catch((error) => {
+        console.error("Fout bij opslaan: ", error);
+        document.getElementById("output").innerText = "Fout bij opslaan, kijk console.";
+    });
+}
+
+// RECORDS LADEN + FILTER
+function laadRecords() {
+    const tbody = document.getElementById("recordsTable");
+    tbody.innerHTML = "";
+
+    const filter = document.getElementById("filterArtikel").value.trim().toLowerCase();
+
+    db.collection("productie").orderBy("timestamp","desc").get()
+    .then(snapshot => {
+        snapshot.forEach(doc => {
+            const d = doc.data();
+            if(filter && !d.artikelnummer.toLowerCase().includes(filter)) return;
+
+            const row = `<tr>
+                <td>${d.artikelnummer}</td>
+                <td>${d.omschrijving}</td>
+                <td>${d.blikinhoud || ""}</td>
+                <td>${d.deksel}</td>
+                <td>${d.blik}</td>
+                <td>${d.secFolie}</td>
+                <td>${d.terFolie}</td>
+                <td>${d.topFolie}</td>
+                <td>${d.pallet}</td>
+                <td>${d.tussenlegger}</td>
+                <td>${d.stapelprogramma}</td>
+                <td>${d.aantalLagen || ""}</td>
+                <td>${d.perLaag || ""}</td>
+                <td>${d.tray}</td>
+                <td>${d.wrap}</td>
+                <td>${d.perPak || ""}</td>
+                <td>${d.perTray || ""}</td>
+                <td>${d.plaatsTussenleggers}</td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+    })
+    .catch(err => console.error(err));
+}
+</script>
+</body>
+</html>
