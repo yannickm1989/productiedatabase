@@ -11,7 +11,7 @@ body {
     background: #f5f5f5;
 }
 .app {
-    max-width: 650px;
+    max-width: 700px;
     margin: auto;
     background: white;
     padding: 20px;
@@ -23,7 +23,7 @@ label {
     display:block;
     margin-top:10px;
 }
-input, select {
+input {
     width: 100%;
     padding: 8px;
     margin-top:5px;
@@ -31,8 +31,8 @@ input, select {
 button {
     padding: 10px;
     width: 100%;
-    font-size: 18px;
-    margin-top:15px;
+    font-size: 16px;
+    margin-top:10px;
     border: none;
     border-radius: 10px;
     background: #28a745;
@@ -40,7 +40,7 @@ button {
     cursor:pointer;
 }
 #output {
-    margin-top: 20px;
+    margin-top: 15px;
     font-size: 16px;
     color: green;
 }
@@ -80,24 +80,18 @@ button {
     left: 10px;
     height: 50px;
 }
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
-th, td {
+.record-card {
     border: 1px solid #ccc;
-    padding: 5px;
-    font-size: 14px;
-    text-align: left;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 15px;
+    background: #f9f9f9;
 }
-th {
-    background: #28a745;
-    color: white;
+.record-card p {
+    margin: 3px 0;
 }
 </style>
 </head>
-
 <body>
 <div class="app">
 
@@ -175,35 +169,11 @@ th {
 
 <!-- OVERZICHT TAB -->
 <div id="overviewTab" style="display:none">
-    <label>Filter op artikelnummer:</label>
-    <input type="text" id="filterArtikel" placeholder="Artikelnummer invoeren">
-    <button type="button" onclick="laadRecords()">Toepassen filter</button>
+<label>Artikelnummer zoeken:</label>
+<input type="text" id="filterArtikel" placeholder="Artikelnummer invoeren">
+<button type="button" onclick="laadArtikel()">Zoek</button>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Artikel</th>
-                <th>Omschrijving</th>
-                <th>Blikinhoud</th>
-                <th>Deksel</th>
-                <th>Blik</th>
-                <th>Sec. folie</th>
-                <th>Ter. folie</th>
-                <th>Topfolie</th>
-                <th>Pallet</th>
-                <th>Tussenlegger</th>
-                <th>Stapelprog.</th>
-                <th>Lagen</th>
-                <th>Per laag</th>
-                <th>Tray</th>
-                <th>Wrap</th>
-                <th>Per pak</th>
-                <th>Per tray/doos</th>
-                <th>Plaats tussenleggers</th>
-            </tr>
-        </thead>
-        <tbody id="recordsTable"></tbody>
-    </table>
+<div id="recordsContainer" style="margin-top:15px;"></div>
 </div>
 
 </div>
@@ -230,7 +200,7 @@ const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const db = getFirestore(app);
 
-// TAB LOGIC
+// TAB LOGICA
 const tab1 = document.getElementById("tab1");
 const tab2 = document.getElementById("tab2");
 const inputTab = document.getElementById("inputTab");
@@ -243,7 +213,6 @@ tab1.onclick = () => {
 tab2.onclick = () => {
     tab2.classList.add("active"); tab1.classList.remove("active");
     inputTab.style.display = "none"; overviewTab.style.display = "block";
-    laadRecords();
 };
 
 // OPSLAAN FUNCTIE
@@ -285,41 +254,54 @@ async function opslaan() {
     }
 }
 
-// RECORDS LADEN + FILTER
-async function laadRecords() {
-    const tbody = document.getElementById("recordsTable");
-    tbody.innerHTML = "";
+// LAAD SPECIFIEK ARTIKEL
+async function laadArtikel() {
+    const container = document.getElementById("recordsContainer");
+    container.innerHTML = "";
     const filter = document.getElementById("filterArtikel").value.trim().toLowerCase();
+    if(!filter) {
+        alert("Voer een artikelnummer in.");
+        return;
+    }
 
     const q = query(collection(db, "productie"), orderBy("timestamp","desc"));
     const querySnapshot = await getDocs(q);
 
+    let gevonden = false;
+
     querySnapshot.forEach(doc => {
         const d = doc.data();
-        if(filter && !d.artikelnummer.toLowerCase().includes(filter)) return;
-
-        const row = `<tr>
-            <td>${d.artikelnummer}</td>
-            <td>${d.omschrijving}</td>
-            <td>${d.blikinhoud || ""}</td>
-            <td>${d.deksel}</td>
-            <td>${d.blik}</td>
-            <td>${d.secFolie}</td>
-            <td>${d.terFolie}</td>
-            <td>${d.topFolie}</td>
-            <td>${d.pallet}</td>
-            <td>${d.tussenlegger}</td>
-            <td>${d.stapelprogramma}</td>
-            <td>${d.aantalLagen || ""}</td>
-            <td>${d.perLaag || ""}</td>
-            <td>${d.tray}</td>
-            <td>${d.wrap}</td>
-            <td>${d.perPak || ""}</td>
-            <td>${d.perTray || ""}</td>
-            <td>${d.plaatsTussenleggers}</td>
-        </tr>`;
-        tbody.innerHTML += row;
+        if(d.artikelnummer.toLowerCase() === filter) {
+            gevonden = true;
+            const card = document.createElement("div");
+            card.className = "record-card";
+            card.innerHTML = `
+                <p><b>Artikelnummer:</b> ${d.artikelnummer}</p>
+                <p><b>Omschrijving:</b> ${d.omschrijving}</p>
+                <p><b>Blikinhoud:</b> ${d.blikinhoud || ""}</p>
+                <p><b>Deksel:</b> ${d.deksel}</p>
+                <p><b>Blik:</b> ${d.blik}</p>
+                <p><b>Secundaire folie:</b> ${d.secFolie}</p>
+                <p><b>Tertiaire folie:</b> ${d.terFolie}</p>
+                <p><b>Topfolie:</b> ${d.topFolie}</p>
+                <p><b>Pallet:</b> ${d.pallet}</p>
+                <p><b>Tussenlegger:</b> ${d.tussenlegger}</p>
+                <p><b>Stapelprogramma:</b> ${d.stapelprogramma}</p>
+                <p><b>Aantal lagen:</b> ${d.aantalLagen || ""}</p>
+                <p><b>Hoeveel per laag:</b> ${d.perLaag || ""}</p>
+                <p><b>Tray:</b> ${d.tray}</p>
+                <p><b>Wrap:</b> ${d.wrap}</p>
+                <p><b>Hoeveel per pak:</b> ${d.perPak || ""}</p>
+                <p><b>Hoeveel per tray/doos:</b> ${d.perTray || ""}</p>
+                <p><b>Plaats tussenleggers:</b> ${d.plaatsTussenleggers}</p>
+            `;
+            container.appendChild(card);
+        }
     });
+
+    if(!gevonden) {
+        container.innerHTML = "<p>Geen gegevens gevonden voor dit artikelnummer.</p>";
+    }
 }
 </script>
 </body>
