@@ -13,7 +13,7 @@ body {
 }
 
 .app {
-    max-width:420px;
+    max-width:450px;
     margin:auto;
     background:white;
     padding:20px;
@@ -70,6 +70,16 @@ input {
     width:100%;
     padding:7px;
     margin-top:3px;
+    border:1px solid #ccc;
+    border-radius:4px;
+}
+
+input.new-article {
+    border-color:green;
+}
+
+input.existing-article {
+    border-color:red;
 }
 
 button.main {
@@ -137,6 +147,7 @@ const colRef = collection(db,"Productiedatabase");
 
 let editId = null;
 
+// Alle velden, inclusief Verpakker 1 en 2
 const fields = [
  {k:"artikelnummer",l:"Artikelnummer"},
  {k:"omschrijving",l:"Omschrijving"},
@@ -159,12 +170,14 @@ const fields = [
  {k:"hoeveelPerLaag",l:"Hoeveel per laag"}
 ];
 
+// Maak invoer-tab
 const invoer = document.getElementById("invoerTab");
 fields.forEach(f=>{
     invoer.innerHTML += `<label>${f.l}</label><input id="${f.k}">`;
 });
 invoer.innerHTML += `<button class="main" onclick="save()">Opslaan</button>`;
 
+// Zoek-tab
 document.getElementById("zoekTab").innerHTML = `
 <label>Zoek op artikelnummer of omschrijving</label>
 <input id="zoek">
@@ -172,6 +185,44 @@ document.getElementById("zoekTab").innerHTML = `
 <div id="result"></div>
 `;
 
+// Live autofill bij typen in artikelnummer
+document.getElementById("artikelnummer").addEventListener("input", async (e)=>{
+  const val = e.target.value.trim().toUpperCase();
+  let inputField = e.target;
+  if(!val){
+    fields.forEach(f=>{
+      if(f.k!=="artikelnummer") document.getElementById(f.k).value = "";
+    });
+    editId = null;
+    inputField.classList.remove("existing-article","new-article");
+    return;
+  }
+  const snap = await getDocs(colRef);
+  let found = false;
+  snap.forEach(d=>{
+    const data = d.data();
+    if(data.artikelnummer?.toUpperCase() === val){
+      editId = d.id;
+      found = true;
+      fields.forEach(f=>{
+        if(f.k!=="artikelnummer") document.getElementById(f.k).value = data[f.k]||"";
+      });
+    }
+  });
+  if(found){
+    inputField.classList.add("existing-article");
+    inputField.classList.remove("new-article");
+  } else {
+    editId = null;
+    fields.forEach(f=>{
+      if(f.k!=="artikelnummer") document.getElementById(f.k).value = "";
+    });
+    inputField.classList.add("new-article");
+    inputField.classList.remove("existing-article");
+  }
+});
+
+// Opslaan
 window.save = async ()=>{
  let data={}
  fields.forEach(f=>{
@@ -186,9 +237,11 @@ window.save = async ()=>{
    await addDoc(colRef,data)
  }
  fields.forEach(f=>document.getElementById(f.k).value="")
+document.getElementById("artikelnummer").classList.remove("existing-article","new-article");
  alert("Opgeslagen")
 }
 
+// Zoeken
 window.zoek = async ()=>{
  const q=document.getElementById("zoek").value.toUpperCase()
  const res=document.getElementById("result")
@@ -212,6 +265,7 @@ window.zoek = async ()=>{
  })
 }
 
+// Bewerken
 window.bewerk=async(id)=>{
  const snap=await getDocs(colRef)
  snap.forEach(d=>{
@@ -221,15 +275,22 @@ window.bewerk=async(id)=>{
    fields.forEach(f=>document.getElementById(f.k).value=data[f.k]||"")
   }
  })
- document.getElementById("tabInvoer").click()
+ tabInvoer.click()
 }
 
+// Verwijderen
 window.verwijder=async(id)=>{
  if(confirm("Artikel verwijderen?")){
   await deleteDoc(doc(db,"Productiedatabase",id))
   document.getElementById("result").innerHTML=""
  }
 }
+
+// Tabs
+const tabInvoer = document.getElementById("tabInvoer")
+const tabZoeken = document.getElementById("tabZoeken")
+const invoerTab = document.getElementById("invoerTab")
+const zoekTab = document.getElementById("zoekTab")
 
 tabInvoer.onclick=()=>{
  tabInvoer.classList.add("active")
