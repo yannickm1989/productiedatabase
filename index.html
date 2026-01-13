@@ -76,6 +76,12 @@ button {
     margin-top: 10px;
     border-radius: 8px;
 }
+.result-title {
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 6px;
+}
 .result button {
     width: auto;
     margin-right: 5px;
@@ -86,6 +92,9 @@ button {
 .hidden {
     display: none;
 }
+hr {
+    margin: 6px 0;
+}
 </style>
 </head>
 
@@ -93,7 +102,7 @@ button {
 <div class="app">
 
 <div class="title-bar">
-    <img src="ym.png">
+    <img src="ym.png" alt="logo">
     <h2>Productiedatabase</h2>
 </div>
 
@@ -144,7 +153,7 @@ import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc } 
 const firebaseConfig = {
   apiKey: "AIzaSyBtV-MNtSxf7mJ5RM5dS_5MeRdpcOMy6a4",
   authDomain: "productiedatabase.firebaseapp.com",
-  projectId: "productiedatabase",
+  projectId: "productiedatabase"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -152,13 +161,34 @@ const db = getFirestore(app);
 
 let editId = null;
 
-const velden = [
+const fields = [
  "artikelnummer","omschrijving","blikinhoud","deksel","blik","tray","wrap","perPak","perTray",
  "secFolie","terFolie","topFolie","pallet","tussenlegger","plaatsTussenleggers",
  "stapelprogramma","aantalLagen","perLaag"
 ];
 
-velden.forEach(id=>{
+const displayOrder = [
+ {key:"artikelnummer",label:"Artikelnummer"},
+ {key:"omschrijving",label:""},
+ {key:"blikinhoud",label:"Blikinhoud"},
+ {key:"deksel",label:"Deksel"},
+ {key:"blik",label:"Blik"},
+ {key:"tray",label:"Tray"},
+ {key:"wrap",label:"Wrap"},
+ {key:"perPak",label:"Hoeveel per pak"},
+ {key:"perTray",label:"Per tray / doos"},
+ {key:"secFolie",label:"Secundaire folie"},
+ {key:"terFolie",label:"Tertiaire folie"},
+ {key:"topFolie",label:"Tertiaire topfolie"},
+ {key:"pallet",label:"Pallet"},
+ {key:"tussenlegger",label:"Tussenlegger"},
+ {key:"plaatsTussenleggers",label:"Plaats tussenleggers"},
+ {key:"stapelprogramma",label:"Stapelprogramma"},
+ {key:"aantalLagen",label:"Aantal lagen"},
+ {key:"perLaag",label:"Hoeveel per laag"}
+];
+
+fields.forEach(id=>{
  const el=document.getElementById(id);
  if(id!=="omschrijving"){
    el.addEventListener("input",()=>el.value=el.value.toUpperCase());
@@ -167,7 +197,7 @@ velden.forEach(id=>{
 
 window.opslaan = async ()=>{
  const data={};
- velden.forEach(id=>data[id]=document.getElementById(id).value);
+ fields.forEach(id=>data[id]=document.getElementById(id).value);
 
  if(editId){
    await updateDoc(doc(db,"productie",editId),data);
@@ -176,7 +206,7 @@ window.opslaan = async ()=>{
    await addDoc(collection(db,"productie"),data);
  }
 
- velden.forEach(id=>document.getElementById(id).value="");
+ fields.forEach(id=>document.getElementById(id).value="");
  output.innerText="Opgeslagen";
 };
 
@@ -187,15 +217,27 @@ window.zoekArtikel = async ()=>{
 
  snap.forEach(d=>{
   const data=d.data();
-  if(data.artikelnummer.toLowerCase().includes(term) ||
-     data.omschrijving.toLowerCase().includes(term)){
-
+  if(
+    data.artikelnummer?.toLowerCase().includes(term) ||
+    data.omschrijving?.toLowerCase().includes(term)
+  ){
     let html="<div class='result'>";
-    velden.forEach(k=>{
-      if(data[k]) html+=`<b>${k}:</b> ${data[k]}<br>`;
+
+    if(data.omschrijving){
+      html+=`<div class="result-title">${data.omschrijving}</div><hr>`;
+    }
+
+    displayOrder.forEach(f=>{
+      if(f.key==="omschrijving") return;
+      if(data[f.key]){
+        html+=`<b>${f.label}:</b> ${data[f.key]}<br>`;
+      }
     });
-    html+=`<button onclick="bewerk('${d.id}')">Bewerk</button>
-           <button class="delete" onclick="verwijder('${d.id}')">Verwijder</button></div>`;
+
+    html+=`
+      <button onclick="bewerk('${d.id}')">Bewerk</button>
+      <button class="delete" onclick="verwijder('${d.id}')">Verwijder</button>
+    </div>`;
     resultaten.innerHTML+=html;
   }
  });
@@ -204,19 +246,19 @@ window.zoekArtikel = async ()=>{
 window.bewerk = async id=>{
  const snap=await getDocs(collection(db,"productie"));
  snap.forEach(d=>{
-   if(d.id===id){
-     const data=d.data();
-     velden.forEach(k=>document.getElementById(k).value=data[k]||"");
-     editId=id;
-     tabInvoer.click();
-   }
+  if(d.id===id){
+    const data=d.data();
+    fields.forEach(f=>document.getElementById(f).value=data[f]||"");
+    editId=id;
+    tabInvoer.click();
+  }
  });
 };
 
 window.verwijder = async id=>{
- if(confirm("Verwijderen?")){
-   await deleteDoc(doc(db,"productie",id));
-   zoekArtikel();
+ if(confirm("Artikel verwijderen?")){
+  await deleteDoc(doc(db,"productie",id));
+  zoekArtikel();
  }
 };
 
