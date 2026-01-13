@@ -2,284 +2,157 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Productiedatabase</title>
-
-<style>
-body {
-    font-family: Arial;
-    background: #f5f5f5;
-    padding: 20px;
-}
-.app {
-    max-width: 460px;
-    margin: auto;
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-label {
-    font-weight: bold;
-    margin-top: 10px;
-    display: block;
-}
-input {
-    width: 100%;
-    padding: 8px;
-    margin-top: 4px;
-}
-button {
-    margin-top: 15px;
-    padding: 10px;
-    width: 100%;
-    background: #28a745;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    cursor: pointer;
-}
-.tab-buttons {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-.tab-buttons button {
-    flex: 1;
-    background: #e0e0e0;
-    color: #333;
-}
-.tab-buttons button.active {
-    background: #28a745;
-    color: white;
-}
-.title-bar {
-    position: relative;
-    text-align: center;
-    background: #28a745;
-    color: white;
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-}
-.title-bar img {
-    position: absolute;
-    left: 10px;
-    height: 40px;
-    top: 50%;
-    transform: translateY(-50%);
-}
-.result {
-    border: 1px solid #ddd;
-    padding: 12px;
-    margin-top: 12px;
-    border-radius: 8px;
-}
-.result-title {
-    text-align: center;
-    font-weight: bold;
-    font-size: 17px;
-    margin-bottom: 8px;
-}
-.result button {
-    width: auto;
-    margin-right: 5px;
-}
-.delete {
-    background: #dc3545;
-}
-.hidden {
-    display: none;
-}
-hr {
-    margin: 8px 0;
-}
-</style>
-</head>
-
-<body>
-<div class="app">
-
-<div class="title-bar">
-    <img src="ym.png" alt="logo">
-    <h2>Productiedatabase</h2>
-</div>
-
-<div class="tab-buttons">
-    <button id="tabInvoer" class="active">Invoer</button>
-    <button id="tabZoek">Zoeken</button>
-</div>
-
-<!-- INVOER -->
-<div id="invoer">
-<div id="invoerVelden"></div>
-<button onclick="opslaan()">Opslaan</button>
-<div id="output"></div>
-</div>
-
-<!-- ZOEK -->
-<div id="zoek" class="hidden">
-<label>Zoek op artikelnummer of omschrijving</label>
-<input id="zoekveld">
-<button onclick="zoekArtikel()">Zoeken</button>
-<div id="resultaten"></div>
-</div>
-
-</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
-
-/* ================= CONFIG ================= */
+import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBtV-MNtSxf7mJ5RM5dS_5MeRdpcOMy6a4",
   authDomain: "productiedatabase.firebaseapp.com",
-  projectId: "productiedatabase"
+  projectId: "productiedatabase",
+  storageBucket: "productiedatabase.firebasestorage.app",
+  messagingSenderId: "269980901692",
+  appId: "1:269980901692:web:642b70f033694811817e39"
 };
-
-const fieldConfig = [
-  { id:"artikelnummer", label:"Artikelnummer" },
-  { id:"omschrijving", label:"Omschrijving" },
-  { id:"blikinhoud", label:"Blikinhoud" },
-  { id:"deksel", label:"Deksel" },
-  { id:"blik", label:"Blik" },
-  { id:"tray", label:"Tray" },
-  { id:"wrap", label:"Wrap" },
-  { id:"perPak", label:"Hoeveel per pak" },
-  { id:"perTray", label:"Per tray / doos" },
-  { id:"secFolie", label:"Secundaire folie" },
-  { id:"terFolie", label:"Tertiaire folie" },
-  { id:"topFolie", label:"Tertiaire topfolie" },
-  { id:"pallet", label:"Pallet" },
-  { id:"tussenlegger", label:"Tussenlegger" },
-  { id:"plaatsTussenleggers", label:"Plaats tussenleggers" },
-  { id:"stapelprogramma", label:"Stapelprogramma" },
-  { id:"aantalLagen", label:"Aantal lagen" },
-  { id:"perLaag", label:"Hoeveel per laag" }
-];
-
-/* ================= INIT ================= */
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const colRef = collection(db, "Productiedatabase");
+
 let editId = null;
 
-/* Invoervelden dynamisch opbouwen */
-const invoerVelden = document.getElementById("invoerVelden");
-fieldConfig.forEach(f => {
-  const label = document.createElement("label");
-  label.innerText = f.label;
-  const input = document.createElement("input");
-  input.id = f.id;
+const fields = [
+  { key:"artikelnummer", label:"Artikelnummer" },
+  { key:"omschrijving", label:"Omschrijving" },
+  { key:"blikinhoud", label:"Blikinhoud" },
+  { key:"deksel", label:"Deksel" },
+  { key:"blik", label:"Blik" },
+  { key:"verpakker1", label:"Verpakker 1" },
+  { key:"verpakker2", label:"Verpakker 2" },
+  { key:"tray", label:"Tray" },
+  { key:"wrap", label:"Wrap" },
+  { key:"hoeveelPerPak", label:"Hoeveel per pak" },
+  { key:"hoeveelPerTray", label:"Hoeveel per tray/doos" },
+  { key:"secundaireFolie", label:"Secundaire folie" },
+  { key:"tertiaireFolie", label:"Tertiaire folie" },
+  { key:"tertiaireTopfolie", label:"Tertiaire topfolie" },
+  { key:"pallet", label:"Pallet" },
+  { key:"tussenlegger", label:"Tussenlegger" },
+  { key:"stapelprogramma", label:"Stapelprogramma" },
+  { key:"aantalLagen", label:"Aantal lagen" },
+  { key:"hoeveelPerLaag", label:"Hoeveel per laag" }
+];
 
-  if (f.id !== "omschrijving") {
-    input.addEventListener("input", () => {
-      input.value = input.value.toUpperCase();
-    });
-  }
-
-  invoerVelden.appendChild(label);
-  invoerVelden.appendChild(input);
-});
-
-/* ================= OPSLAAN ================= */
-
-window.opslaan = async () => {
-  const data = {};
-  fieldConfig.forEach(f => {
-    data[f.id] = document.getElementById(f.id).value;
+window.saveArticle = async () => {
+  let data = {};
+  fields.forEach(f => {
+    let val = document.getElementById(f.key).value.trim();
+    if (f.key !== "omschrijving") val = val.toUpperCase();
+    data[f.key] = val;
   });
 
   if (editId) {
-    await updateDoc(doc(db,"productie",editId), data);
+    await updateDoc(doc(db,"Productiedatabase",editId), data);
     editId = null;
   } else {
-    await addDoc(collection(db,"productie"), data);
+    await addDoc(colRef, data);
   }
 
-  fieldConfig.forEach(f => document.getElementById(f.id).value = "");
-  output.innerText = "Opgeslagen";
+  clearForm();
+  alert("Opgeslagen");
 };
 
-/* ================= ZOEKEN ================= */
+function clearForm(){
+  fields.forEach(f => document.getElementById(f.key).value = "");
+}
 
-window.zoekArtikel = async () => {
-  resultaten.innerHTML = "";
-  const term = zoekveld.value.toLowerCase();
-  const snap = await getDocs(collection(db,"productie"));
+window.searchArticle = async () => {
+  const zoek = document.getElementById("zoek").value.trim().toUpperCase();
+  const result = document.getElementById("result");
+  result.innerHTML = "";
 
+  const snap = await getDocs(colRef);
   snap.forEach(d => {
     const data = d.data();
     if (
-      data.artikelnummer?.toLowerCase().includes(term) ||
-      data.omschrijving?.toLowerCase().includes(term)
+      data.artikelnummer?.includes(zoek) ||
+      data.omschrijving?.toUpperCase().includes(zoek)
     ) {
-      let html = "<div class='result'>";
+      let html = "<div class='card'>";
 
-      /* OMSCHRIJVING BOVENAAN */
       if (data.omschrijving) {
-        html += `<div class="result-title">${data.omschrijving}</div><hr>`;
+        html += `
+          <div class="omschrijving">${data.omschrijving}</div>
+          <hr>
+        `;
       }
 
-      /* REST IN VASTE VOLGORDE */
-      fieldConfig.forEach(f => {
-        if (f.id === "omschrijving") return;
-        if (data[f.id]) {
-          html += `<b>${f.label}:</b> ${data[f.id]}<br>`;
+      fields.forEach(f => {
+        if (f.key === "omschrijving") return;
+        const val = data[f.key];
+        if (val) {
+          html += `<div><b>${f.label}:</b> ${val}</div>`;
         }
       });
 
       html += `
-        <button onclick="bewerk('${d.id}')">Bewerk</button>
-        <button class="delete" onclick="verwijder('${d.id}')">Verwijder</button>
+        <button onclick="editArticle('${d.id}')">Bewerken</button>
+        <button onclick="deleteArticle('${d.id}')">Verwijderen</button>
       </div>`;
-
-      resultaten.innerHTML += html;
+      result.innerHTML += html;
     }
   });
 };
 
-/* ================= BEWERKEN / VERWIJDEREN ================= */
-
-window.bewerk = async id => {
-  const snap = await getDocs(collection(db,"productie"));
+window.editArticle = async (id) => {
+  const snap = await getDocs(colRef);
   snap.forEach(d => {
     if (d.id === id) {
-      const data = d.data();
-      fieldConfig.forEach(f => {
-        document.getElementById(f.id).value = data[f.id] || "";
-      });
       editId = id;
-      tabInvoer.click();
+      const data = d.data();
+      fields.forEach(f => {
+        document.getElementById(f.key).value = data[f.key] || "";
+      });
     }
   });
 };
 
-window.verwijder = async id => {
+window.deleteArticle = async (id) => {
   if (confirm("Artikel verwijderen?")) {
-    await deleteDoc(doc(db,"productie",id));
-    zoekArtikel();
+    await deleteDoc(doc(db,"Productiedatabase",id));
+    document.getElementById("result").innerHTML = "";
   }
 };
-
-/* ================= TABS ================= */
-
-tabInvoer.onclick = () => {
-  invoer.classList.remove("hidden");
-  zoek.classList.add("hidden");
-  tabInvoer.classList.add("active");
-  tabZoek.classList.remove("active");
-};
-
-tabZoek.onclick = () => {
-  zoek.classList.remove("hidden");
-  invoer.classList.add("hidden");
-  tabZoek.classList.add("active");
-  tabInvoer.classList.remove("active");
-};
 </script>
+
+<style>
+body { font-family: Arial; margin:20px }
+input { width:100%; margin-bottom:6px }
+.card { border:1px solid #ccc; padding:10px; margin-bottom:10px }
+.omschrijving { text-align:center; font-weight:bold; font-size:16px; }
+button { margin-top:8px; margin-right:6px }
+</style>
+</head>
+
+<body>
+
+<h2>Productiedatabase</h2>
+
+<h3>Invoer</h3>
+<div>
+  ${fields.map(f => `<input id="${f.key}" placeholder="${f.label}">`).join("")}
+  <button onclick="saveArticle()">Opslaan</button>
+</div>
+
+<hr>
+
+<h3>Zoeken</h3>
+<input id="zoek" placeholder="Zoek op artikelnummer of omschrijving">
+<button onclick="searchArticle()">Zoek</button>
+
+<div id="result"></div>
+
 </body>
 </html>
