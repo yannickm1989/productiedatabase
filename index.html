@@ -12,7 +12,7 @@ body {
     padding: 20px;
 }
 .app {
-    max-width: 450px;
+    max-width: 460px;
     margin: auto;
     background: white;
     padding: 20px;
@@ -72,15 +72,15 @@ button {
 }
 .result {
     border: 1px solid #ddd;
-    padding: 10px;
-    margin-top: 10px;
+    padding: 12px;
+    margin-top: 12px;
     border-radius: 8px;
 }
 .result-title {
     text-align: center;
     font-weight: bold;
-    font-size: 16px;
-    margin-bottom: 6px;
+    font-size: 17px;
+    margin-bottom: 8px;
 }
 .result button {
     width: auto;
@@ -93,7 +93,7 @@ button {
     display: none;
 }
 hr {
-    margin: 6px 0;
+    margin: 8px 0;
 }
 </style>
 </head>
@@ -113,25 +113,7 @@ hr {
 
 <!-- INVOER -->
 <div id="invoer">
-<label>Artikelnummer</label><input id="artikelnummer">
-<label>Omschrijving</label><input id="omschrijving">
-<label>Blikinhoud</label><input id="blikinhoud">
-<label>Deksel</label><input id="deksel">
-<label>Blik</label><input id="blik">
-<label>Tray</label><input id="tray">
-<label>Wrap</label><input id="wrap">
-<label>Hoeveel per pak</label><input id="perPak">
-<label>Per tray / doos</label><input id="perTray">
-<label>Secundaire folie</label><input id="secFolie">
-<label>Tertiaire folie</label><input id="terFolie">
-<label>Tertiaire topfolie</label><input id="topFolie">
-<label>Pallet</label><input id="pallet">
-<label>Tussenlegger</label><input id="tussenlegger">
-<label>Plaats tussenleggers</label><input id="plaatsTussenleggers">
-<label>Stapelprogramma</label><input id="stapelprogramma">
-<label>Aantal lagen</label><input id="aantalLagen">
-<label>Hoeveel per laag</label><input id="perLaag">
-
+<div id="invoerVelden"></div>
 <button onclick="opslaan()">Opslaan</button>
 <div id="output"></div>
 </div>
@@ -150,129 +132,153 @@ hr {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
+/* ================= CONFIG ================= */
+
 const firebaseConfig = {
   apiKey: "AIzaSyBtV-MNtSxf7mJ5RM5dS_5MeRdpcOMy6a4",
   authDomain: "productiedatabase.firebaseapp.com",
   projectId: "productiedatabase"
 };
 
+const fieldConfig = [
+  { id:"artikelnummer", label:"Artikelnummer" },
+  { id:"omschrijving", label:"Omschrijving" },
+  { id:"blikinhoud", label:"Blikinhoud" },
+  { id:"deksel", label:"Deksel" },
+  { id:"blik", label:"Blik" },
+  { id:"tray", label:"Tray" },
+  { id:"wrap", label:"Wrap" },
+  { id:"perPak", label:"Hoeveel per pak" },
+  { id:"perTray", label:"Per tray / doos" },
+  { id:"secFolie", label:"Secundaire folie" },
+  { id:"terFolie", label:"Tertiaire folie" },
+  { id:"topFolie", label:"Tertiaire topfolie" },
+  { id:"pallet", label:"Pallet" },
+  { id:"tussenlegger", label:"Tussenlegger" },
+  { id:"plaatsTussenleggers", label:"Plaats tussenleggers" },
+  { id:"stapelprogramma", label:"Stapelprogramma" },
+  { id:"aantalLagen", label:"Aantal lagen" },
+  { id:"perLaag", label:"Hoeveel per laag" }
+];
+
+/* ================= INIT ================= */
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
 let editId = null;
 
-const fields = [
- "artikelnummer","omschrijving","blikinhoud","deksel","blik","tray","wrap","perPak","perTray",
- "secFolie","terFolie","topFolie","pallet","tussenlegger","plaatsTussenleggers",
- "stapelprogramma","aantalLagen","perLaag"
-];
+/* Invoervelden dynamisch opbouwen */
+const invoerVelden = document.getElementById("invoerVelden");
+fieldConfig.forEach(f => {
+  const label = document.createElement("label");
+  label.innerText = f.label;
+  const input = document.createElement("input");
+  input.id = f.id;
 
-const displayOrder = [
- {key:"artikelnummer",label:"Artikelnummer"},
- {key:"omschrijving",label:""},
- {key:"blikinhoud",label:"Blikinhoud"},
- {key:"deksel",label:"Deksel"},
- {key:"blik",label:"Blik"},
- {key:"tray",label:"Tray"},
- {key:"wrap",label:"Wrap"},
- {key:"perPak",label:"Hoeveel per pak"},
- {key:"perTray",label:"Per tray / doos"},
- {key:"secFolie",label:"Secundaire folie"},
- {key:"terFolie",label:"Tertiaire folie"},
- {key:"topFolie",label:"Tertiaire topfolie"},
- {key:"pallet",label:"Pallet"},
- {key:"tussenlegger",label:"Tussenlegger"},
- {key:"plaatsTussenleggers",label:"Plaats tussenleggers"},
- {key:"stapelprogramma",label:"Stapelprogramma"},
- {key:"aantalLagen",label:"Aantal lagen"},
- {key:"perLaag",label:"Hoeveel per laag"}
-];
+  if (f.id !== "omschrijving") {
+    input.addEventListener("input", () => {
+      input.value = input.value.toUpperCase();
+    });
+  }
 
-fields.forEach(id=>{
- const el=document.getElementById(id);
- if(id!=="omschrijving"){
-   el.addEventListener("input",()=>el.value=el.value.toUpperCase());
- }
+  invoerVelden.appendChild(label);
+  invoerVelden.appendChild(input);
 });
 
-window.opslaan = async ()=>{
- const data={};
- fields.forEach(id=>data[id]=document.getElementById(id).value);
+/* ================= OPSLAAN ================= */
 
- if(editId){
-   await updateDoc(doc(db,"productie",editId),data);
-   editId=null;
- } else {
-   await addDoc(collection(db,"productie"),data);
- }
+window.opslaan = async () => {
+  const data = {};
+  fieldConfig.forEach(f => {
+    data[f.id] = document.getElementById(f.id).value;
+  });
 
- fields.forEach(id=>document.getElementById(id).value="");
- output.innerText="Opgeslagen";
+  if (editId) {
+    await updateDoc(doc(db,"productie",editId), data);
+    editId = null;
+  } else {
+    await addDoc(collection(db,"productie"), data);
+  }
+
+  fieldConfig.forEach(f => document.getElementById(f.id).value = "");
+  output.innerText = "Opgeslagen";
 };
 
-window.zoekArtikel = async ()=>{
- resultaten.innerHTML="";
- const term=zoekveld.value.toLowerCase();
- const snap=await getDocs(collection(db,"productie"));
+/* ================= ZOEKEN ================= */
 
- snap.forEach(d=>{
-  const data=d.data();
-  if(
-    data.artikelnummer?.toLowerCase().includes(term) ||
-    data.omschrijving?.toLowerCase().includes(term)
-  ){
-    let html="<div class='result'>";
+window.zoekArtikel = async () => {
+  resultaten.innerHTML = "";
+  const term = zoekveld.value.toLowerCase();
+  const snap = await getDocs(collection(db,"productie"));
 
-    if(data.omschrijving){
-      html+=`<div class="result-title">${data.omschrijving}</div><hr>`;
-    }
+  snap.forEach(d => {
+    const data = d.data();
+    if (
+      data.artikelnummer?.toLowerCase().includes(term) ||
+      data.omschrijving?.toLowerCase().includes(term)
+    ) {
+      let html = "<div class='result'>";
 
-    displayOrder.forEach(f=>{
-      if(f.key==="omschrijving") return;
-      if(data[f.key]){
-        html+=`<b>${f.label}:</b> ${data[f.key]}<br>`;
+      /* OMSCHRIJVING BOVENAAN */
+      if (data.omschrijving) {
+        html += `<div class="result-title">${data.omschrijving}</div><hr>`;
       }
-    });
 
-    html+=`
-      <button onclick="bewerk('${d.id}')">Bewerk</button>
-      <button class="delete" onclick="verwijder('${d.id}')">Verwijder</button>
-    </div>`;
-    resultaten.innerHTML+=html;
+      /* REST IN VASTE VOLGORDE */
+      fieldConfig.forEach(f => {
+        if (f.id === "omschrijving") return;
+        if (data[f.id]) {
+          html += `<b>${f.label}:</b> ${data[f.id]}<br>`;
+        }
+      });
+
+      html += `
+        <button onclick="bewerk('${d.id}')">Bewerk</button>
+        <button class="delete" onclick="verwijder('${d.id}')">Verwijder</button>
+      </div>`;
+
+      resultaten.innerHTML += html;
+    }
+  });
+};
+
+/* ================= BEWERKEN / VERWIJDEREN ================= */
+
+window.bewerk = async id => {
+  const snap = await getDocs(collection(db,"productie"));
+  snap.forEach(d => {
+    if (d.id === id) {
+      const data = d.data();
+      fieldConfig.forEach(f => {
+        document.getElementById(f.id).value = data[f.id] || "";
+      });
+      editId = id;
+      tabInvoer.click();
+    }
+  });
+};
+
+window.verwijder = async id => {
+  if (confirm("Artikel verwijderen?")) {
+    await deleteDoc(doc(db,"productie",id));
+    zoekArtikel();
   }
- });
 };
 
-window.bewerk = async id=>{
- const snap=await getDocs(collection(db,"productie"));
- snap.forEach(d=>{
-  if(d.id===id){
-    const data=d.data();
-    fields.forEach(f=>document.getElementById(f).value=data[f]||"");
-    editId=id;
-    tabInvoer.click();
-  }
- });
+/* ================= TABS ================= */
+
+tabInvoer.onclick = () => {
+  invoer.classList.remove("hidden");
+  zoek.classList.add("hidden");
+  tabInvoer.classList.add("active");
+  tabZoek.classList.remove("active");
 };
 
-window.verwijder = async id=>{
- if(confirm("Artikel verwijderen?")){
-  await deleteDoc(doc(db,"productie",id));
-  zoekArtikel();
- }
-};
-
-tabInvoer.onclick=()=>{
- invoer.classList.remove("hidden");
- zoek.classList.add("hidden");
- tabInvoer.classList.add("active");
- tabZoek.classList.remove("active");
-};
-tabZoek.onclick=()=>{
- zoek.classList.remove("hidden");
- invoer.classList.add("hidden");
- tabZoek.classList.add("active");
- tabInvoer.classList.remove("active");
+tabZoek.onclick = () => {
+  zoek.classList.remove("hidden");
+  invoer.classList.add("hidden");
+  tabZoek.classList.add("active");
+  tabInvoer.classList.remove("active");
 };
 </script>
 </body>
