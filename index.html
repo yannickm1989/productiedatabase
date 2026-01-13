@@ -6,270 +6,232 @@
 <title>Productiedatabase</title>
 
 <style>
-body { font-family: Arial; background:#f5f5f5; padding:20px; }
+body {
+    font-family: Arial;
+    background: #f5f5f5;
+    padding: 20px;
+}
 .app {
-    max-width:500px; margin:auto; background:white; padding:20px;
-    border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1);
+    max-width: 450px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+label {
+    font-weight: bold;
+    margin-top: 10px;
+    display: block;
+}
+input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+}
+button {
+    margin-top: 15px;
+    padding: 10px;
+    width: 100%;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+}
+.tab-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+.tab-buttons button {
+    flex: 1;
+    background: #e0e0e0;
+    color: #333;
+}
+.tab-buttons button.active {
+    background: #28a745;
+    color: white;
 }
 .title-bar {
-    position:relative; display:flex; justify-content:center; align-items:center;
-    background:#28a745; color:white; padding:10px; border-radius:8px;
+    position: relative;
+    text-align: center;
+    background: #28a745;
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 15px;
 }
-.title-bar img { position:absolute; left:10px; height:40px; }
-.tab-buttons { display:flex; gap:10px; margin:15px 0; }
-.tab-buttons button {
-    flex:1; padding:8px; border:none; border-radius:8px;
-    background:#e0e0e0; cursor:pointer;
+.title-bar img {
+    position: absolute;
+    left: 10px;
+    height: 40px;
+    top: 50%;
+    transform: translateY(-50%);
 }
-.tab-buttons button.active { background:#28a745; color:white; font-weight:bold; }
-.tab { display:none; }
-.tab.active { display:block; }
-label { font-weight:bold; margin-top:10px; display:block; }
-input { width:100%; padding:8px; margin-top:4px; }
-button.action {
-    width:100%; margin-top:15px; padding:10px;
-    background:#28a745; color:white; border:none; border-radius:10px;
-    cursor:pointer;
+.result {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 8px;
 }
-.result { background:#f1f8f4; padding:10px; margin-top:10px; border-radius:6px; }
-.result b { display:inline-block; width:150px; }
-.edit { background:#1976d2; color:white; }
-.delete { background:#c62828; color:white; }
-.result button { margin-top:8px; margin-right:5px; border:none; border-radius:6px; padding:6px 10px; cursor:pointer; }
-.output { margin-top:10px; font-weight:bold; }
-#suggesties-container { border:1px solid #ccc; max-height:150px; overflow-y:auto; margin-top:2px; }
-#suggesties-container div { padding:5px; cursor:pointer; }
-#suggesties-container div:hover { background:#e0e0e0; }
+.result button {
+    width: auto;
+    margin-right: 5px;
+}
+.delete {
+    background: #dc3545;
+}
+.hidden {
+    display: none;
+}
 </style>
 </head>
 
 <body>
-
 <div class="app">
+
 <div class="title-bar">
     <img src="ym.png">
     <h2>Productiedatabase</h2>
 </div>
 
 <div class="tab-buttons">
-    <button id="tabInvoer" class="active">Artikel invoeren</button>
-    <button id="tabZoeken">Artikel opzoeken</button>
+    <button id="tabInvoer" class="active">Invoer</button>
+    <button id="tabZoek">Zoeken</button>
 </div>
 
-<!-- TAB INVOER -->
-<div id="invoer" class="tab active">
+<!-- INVOER -->
+<div id="invoer">
 <label>Artikelnummer</label><input id="artikelnummer">
-
 <label>Omschrijving</label><input id="omschrijving">
 <label>Blikinhoud</label><input id="blikinhoud">
 <label>Deksel</label><input id="deksel">
 <label>Blik</label><input id="blik">
+<label>Tray</label><input id="tray">
+<label>Wrap</label><input id="wrap">
+<label>Hoeveel per pak</label><input id="perPak">
+<label>Per tray / doos</label><input id="perTray">
 <label>Secundaire folie</label><input id="secFolie">
 <label>Tertiaire folie</label><input id="terFolie">
 <label>Tertiaire topfolie</label><input id="topFolie">
 <label>Pallet</label><input id="pallet">
 <label>Tussenlegger</label><input id="tussenlegger">
+<label>Plaats tussenleggers</label><input id="plaatsTussenleggers">
 <label>Stapelprogramma</label><input id="stapelprogramma">
 <label>Aantal lagen</label><input id="aantalLagen">
 <label>Hoeveel per laag</label><input id="perLaag">
-<label>Tray</label><input id="tray">
-<label>Wrap</label><input id="wrap">
-<label>Hoeveel per pak</label><input id="perPak">
-<label>Hoeveel per tray / doos</label><input id="perTray">
-<label>Plaats tussenleggers</label><input id="plaatsTussenleggers">
 
-<button class="action" onclick="opslaan()">Opslaan</button>
-<div id="output" class="output"></div>
+<button onclick="opslaan()">Opslaan</button>
+<div id="output"></div>
 </div>
 
-<!-- TAB ZOEKEN -->
-<div id="zoeken" class="tab">
+<!-- ZOEK -->
+<div id="zoek" class="hidden">
 <label>Zoek op artikelnummer of omschrijving</label>
-<input id="zoekveld" oninput="suggesties()" autocomplete="off">
-<div id="suggesties-container"></div>
-<button class="action" onclick="zoekArtikel()">Zoeken</button>
+<input id="zoekveld">
+<button onclick="zoekArtikel()">Zoeken</button>
 <div id="resultaten"></div>
 </div>
+
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-const app = initializeApp({
+const firebaseConfig = {
   apiKey: "AIzaSyBtV-MNtSxf7mJ5RM5dS_5MeRdpcOMy6a4",
   authDomain: "productiedatabase.firebaseapp.com",
   projectId: "productiedatabase",
-});
+};
+
+const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 let editId = null;
 
-/* TAB SWITCH */
-tabInvoer.onclick = () => switchTab(true);
-tabZoeken.onclick = () => switchTab(false);
-function switchTab(invoer) {
-    tabInvoer.classList.toggle("active", invoer);
-    tabZoeken.classList.toggle("active", !invoer);
-    document.getElementById("invoer").classList.toggle("active", invoer);
-    document.getElementById("zoeken").classList.toggle("active", !invoer);
-}
+const velden = [
+ "artikelnummer","omschrijving","blikinhoud","deksel","blik","tray","wrap","perPak","perTray",
+ "secFolie","terFolie","topFolie","pallet","tussenlegger","plaatsTussenleggers",
+ "stapelprogramma","aantalLagen","perLaag"
+];
 
-/* AUTOMATISCH INVULLEN */
-artikelnummer.addEventListener("blur", async () => {
-    const snap = await getDocs(collection(db, "productie"));
-    snap.forEach(d => {
-        const data = d.data();
-        if (data.artikelnummer === artikelnummer.value) {
-            editId = d.id;
-            for (const key in data) {
-                if (document.getElementById(key)) {
-                    document.getElementById(key).value = data[key];
-                }
-            }
-            output.style.color = "blue";
-            output.innerText = "Bestaand artikel automatisch geladen";
-        }
-    });
+velden.forEach(id=>{
+ const el=document.getElementById(id);
+ if(id!=="omschrijving"){
+   el.addEventListener("input",()=>el.value=el.value.toUpperCase());
+ }
 });
 
-/* AUTOMATISCH IN HOOFDLETTERS (behalve omschrijving) */
-const veldenHoofdletters = ["artikelnummer","blikinhoud","deksel","blik","secFolie","terFolie","topFolie",
-                            "pallet","tussenlegger","stapelprogramma","aantalLagen","perLaag","tray","wrap","perPak","perTray","plaatsTussenleggers"];
-veldenHoofdletters.forEach(id => {
-    const input = document.getElementById(id);
-    input.addEventListener("input", () => {
-        input.value = input.value.toUpperCase();
-    });
-});
+window.opslaan = async ()=>{
+ const data={};
+ velden.forEach(id=>data[id]=document.getElementById(id).value);
 
-/* OPSLAAN / UPDATE */
-window.opslaan = async () => {
-    const data = {};
-    veldenHoofdletters.concat(["omschrijving"]).forEach(id => {
-        data[id] = document.getElementById(id).value;
-    });
+ if(editId){
+   await updateDoc(doc(db,"productie",editId),data);
+   editId=null;
+ } else {
+   await addDoc(collection(db,"productie"),data);
+ }
 
-    if (!data.artikelnummer || !data.omschrijving) {
-        output.style.color = "red";
-        output.innerText = "Artikelnummer en omschrijving verplicht";
-        return;
-    }
-
-    if (editId) {
-        await updateDoc(doc(db, "productie", editId), data);
-        output.innerText = "Artikel bijgewerkt";
-        editId = null;
-    } else {
-        await addDoc(collection(db, "productie"), data);
-        output.innerText = "Nieuw artikel opgeslagen";
-    }
-
-    output.style.color = "green";
-
-    // Velden leegmaken
-    veldenHoofdletters.concat(["omschrijving"]).forEach(id => { document.getElementById(id).value = ""; });
+ velden.forEach(id=>document.getElementById(id).value="");
+ output.innerText="Opgeslagen";
 };
 
-/* ZOEKEN + BEWERKEN + VERWIJDEREN */
-window.zoekArtikel = async () => {
-    resultaten.innerHTML = "";
-    const zoek = zoekveld.value.toLowerCase();
-    const snap = await getDocs(collection(db, "productie"));
-    snap.forEach(d => {
-        const data = d.data();
-        if (data.artikelnummer.toLowerCase().includes(zoek) ||
-            data.omschrijving.toLowerCase().includes(zoek)) {
+window.zoekArtikel = async ()=>{
+ resultaten.innerHTML="";
+ const term=zoekveld.value.toLowerCase();
+ const snap=await getDocs(collection(db,"productie"));
 
-            let html = "<div class='result'>";
-            for (const key in data) {
-                if (data[key]) { // alleen tonen als er een waarde is
-                    let label = key;
-                    switch(key) {
-                        case "artikelnummer": label = "Artikelnummer"; break;
-                        case "omschrijving": label = "Omschrijving"; break;
-                        case "blikinhoud": label = "Blikinhoud"; break;
-                        case "deksel": label = "Deksel"; break;
-                        case "blik": label = "Blik"; break;
-                        case "secFolie": label = "Sec. folie"; break;
-                        case "terFolie": label = "Tert. folie"; break;
-                        case "topFolie": label = "Topfolie"; break;
-                        case "pallet": label = "Pallet"; break;
-                        case "tussenlegger": label = "Tussenlegger"; break;
-                        case "stapelprogramma": label = "Stapelprogramma"; break;
-                        case "aantalLagen": label = "Aantal lagen"; break;
-                        case "perLaag": label = "Per laag"; break;
-                        case "tray": label = "Tray"; break;
-                        case "wrap": label = "Wrap"; break;
-                        case "perPak": label = "Hoeveel per pak"; break;
-                        case "perTray": label = "Per tray / doos"; break;
-                        case "plaatsTussenleggers": label = "Plaats tussenleggers"; break;
-                    }
-                    html += `<b>${label}:</b> ${data[key]}<br>`;
-                }
-            }
-            html += `<button class="edit" onclick="bewerk('${d.id}')">Bewerk</button>
-                     <button class="delete" onclick="verwijder('${d.id}')">Verwijder</button>
-                     </div>`;
-            resultaten.innerHTML += html;
-        }
+ snap.forEach(d=>{
+  const data=d.data();
+  if(data.artikelnummer.toLowerCase().includes(term) ||
+     data.omschrijving.toLowerCase().includes(term)){
+
+    let html="<div class='result'>";
+    velden.forEach(k=>{
+      if(data[k]) html+=`<b>${k}:</b> ${data[k]}<br>`;
     });
+    html+=`<button onclick="bewerk('${d.id}')">Bewerk</button>
+           <button class="delete" onclick="verwijder('${d.id}')">Verwijder</button></div>`;
+    resultaten.innerHTML+=html;
+  }
+ });
 };
 
-/* BEWERKEN VIA ZOEKRESULTAAT */
-window.bewerk = async (id) => {
-    const snap = await getDocs(collection(db, "productie"));
-    snap.forEach(docItem => {
-        if (docItem.id === id) {
-            const data = docItem.data();
-            editId = id;
-            for (const key in data) {
-                if (document.getElementById(key)) {
-                    document.getElementById(key).value = data[key];
-                }
-            }
-            switchTab(true); // automatisch naar invoer-tab
-            output.style.color = "blue";
-            output.innerText = "Artikel in bewerkingsmodus";
-        }
-    });
+window.bewerk = async id=>{
+ const snap=await getDocs(collection(db,"productie"));
+ snap.forEach(d=>{
+   if(d.id===id){
+     const data=d.data();
+     velden.forEach(k=>document.getElementById(k).value=data[k]||"");
+     editId=id;
+     tabInvoer.click();
+   }
+ });
 };
 
-window.verwijder = async (id) => {
-    if (confirm("Artikel verwijderen?")) {
-        await deleteDoc(doc(db, "productie", id));
-        zoekArtikel();
-    }
+window.verwijder = async id=>{
+ if(confirm("Verwijderen?")){
+   await deleteDoc(doc(db,"productie",id));
+   zoekArtikel();
+ }
 };
 
-/* AUTOCOMPLETE */
-async function suggesties() {
-    const term = zoekveld.value.toLowerCase();
-    const container = document.getElementById("suggesties-container");
-    container.innerHTML = "";
-    if (!term) return;
-
-    const snap = await getDocs(collection(db, "productie"));
-    let added = 0;
-    snap.forEach(d => {
-        const data = d.data();
-        if (data.artikelnummer.toLowerCase().includes(term) || data.omschrijving.toLowerCase().includes(term)) {
-            const div = document.createElement("div");
-            div.innerText = `${data.artikelnummer} - ${data.omschrijving}`;
-            div.onclick = () => {
-                zoekveld.value = data.artikelnummer;
-                container.innerHTML = "";
-                zoekArtikel();
-            };
-            container.appendChild(div);
-            added++;
-        }
-    });
-    if (added === 0) {
-        container.innerHTML = "<div style='padding:5px;color:#888;'>Geen resultaten</div>";
-    }
-}
+tabInvoer.onclick=()=>{
+ invoer.classList.remove("hidden");
+ zoek.classList.add("hidden");
+ tabInvoer.classList.add("active");
+ tabZoek.classList.remove("active");
+};
+tabZoek.onclick=()=>{
+ zoek.classList.remove("hidden");
+ invoer.classList.add("hidden");
+ tabZoek.classList.add("active");
+ tabInvoer.classList.remove("active");
+};
 </script>
-
 </body>
 </html>
