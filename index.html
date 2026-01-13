@@ -6,123 +6,43 @@
 <title>Productiedatabase</title>
 
 <style>
-body {
-    font-family: Arial;
-    background: #f5f5f5;
-    padding: 20px;
-}
-
+body { font-family: Arial; background:#f5f5f5; padding:20px; }
 .app {
-    max-width: 450px;
-    margin: auto;
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    max-width:450px; margin:auto; background:white; padding:20px;
+    border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1);
 }
-
 .title-bar {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #28a745;
-    color: white;
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 15px;
+    position:relative; display:flex; justify-content:center; align-items:center;
+    background:#28a745; color:white; padding:10px; border-radius:8px;
 }
-
-.title-bar img {
-    position: absolute;
-    left: 10px;
-    height: 40px;
-}
-
-.tab-buttons {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
+.title-bar img { position:absolute; left:10px; height:40px; }
+.tab-buttons { display:flex; gap:10px; margin:15px 0; }
 .tab-buttons button {
-    flex: 1;
-    padding: 8px;
-    border: none;
-    border-radius: 8px;
-    background: #e0e0e0;
-    cursor: pointer;
+    flex:1; padding:8px; border:none; border-radius:8px;
+    background:#e0e0e0; cursor:pointer;
 }
-
-.tab-buttons button.active {
-    background: #28a745;
-    color: white;
-    font-weight: bold;
-}
-
-.tab {
-    display: none;
-}
-
-.tab.active {
-    display: block;
-}
-
-label {
-    font-weight: bold;
-    display: block;
-    margin-top: 10px;
-}
-
-input {
-    width: 100%;
-    padding: 8px;
-    margin-top: 4px;
-}
-
+.tab-buttons button.active { background:#28a745; color:white; font-weight:bold; }
+.tab { display:none; }
+.tab.active { display:block; }
+label { font-weight:bold; margin-top:10px; display:block; }
+input { width:100%; padding:8px; margin-top:4px; }
 button.action {
-    width: 100%;
-    margin-top: 15px;
-    padding: 10px;
-    background: #28a745;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
+    width:100%; margin-top:15px; padding:10px;
+    background:#28a745; color:white; border:none; border-radius:10px;
 }
-
-.result {
-    background: #f1f8f4;
-    padding: 10px;
-    margin-top: 10px;
-    border-radius: 6px;
-}
-
-.result button {
-    margin-top: 8px;
-    margin-right: 5px;
-    padding: 6px 10px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-.edit { background: #1976d2; color: white; }
-.delete { background: #c62828; color: white; }
-
-.output {
-    margin-top: 10px;
-    font-weight: bold;
-}
+.result { background:#f1f8f4; padding:10px; margin-top:10px; border-radius:6px; }
+.edit { background:#1976d2; color:white; }
+.delete { background:#c62828; color:white; }
+.result button { margin-top:8px; margin-right:5px; border:none; border-radius:6px; padding:6px 10px; }
+.output { margin-top:10px; font-weight:bold; }
 </style>
 </head>
 
 <body>
 
 <div class="app">
-
 <div class="title-bar">
-    <img src="ym.png" alt="YM">
+    <img src="ym.png">
     <h2>Productiedatabase</h2>
 </div>
 
@@ -131,10 +51,10 @@ button.action {
     <button id="tabZoeken">Artikel opzoeken</button>
 </div>
 
-<!-- TAB INVOER -->
 <div id="invoer" class="tab active">
+<label>Artikelnummer</label>
+<input id="artikelnummer">
 
-<label>Artikelnummer</label><input id="artikelnummer">
 <label>Omschrijving</label><input id="omschrijving">
 <label>Blikinhoud</label><input id="blikinhoud">
 <label>Deksel</label><input id="deksel">
@@ -157,49 +77,58 @@ button.action {
 <div id="output" class="output"></div>
 </div>
 
-<!-- TAB ZOEKEN -->
 <div id="zoeken" class="tab">
-
 <label>Zoek op artikelnummer of omschrijving</label>
 <input id="zoekveld">
-
 <button class="action" onclick="zoekArtikel()">Zoeken</button>
-
 <div id="resultaten"></div>
 </div>
-
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-const firebaseConfig = {
+const app = initializeApp({
   apiKey: "AIzaSyBtV-MNtSxf7mJ5RM5dS_5MeRdpcOMy6a4",
   authDomain: "productiedatabase.firebaseapp.com",
   projectId: "productiedatabase",
-  storageBucket: "productiedatabase.firebasestorage.app",
-  messagingSenderId: "269980901692",
-  appId: "1:269980901692:web:642b70f033694811817e39"
-};
-
-const app = initializeApp(firebaseConfig);
+});
 const db = getFirestore(app);
 
 let editId = null;
 
-/* TABS */
-tabInvoer.onclick = () => wisselTab(true);
-tabZoeken.onclick = () => wisselTab(false);
-
-function wisselTab(invoer) {
+/* TAB SWITCH */
+tabInvoer.onclick = () => switchTab(true);
+tabZoeken.onclick = () => switchTab(false);
+function switchTab(invoer) {
     tabInvoer.classList.toggle("active", invoer);
     tabZoeken.classList.toggle("active", !invoer);
-    document.getElementById("invoer").classList.toggle("active", invoer);
-    document.getElementById("zoeken").classList.toggle("active", !invoer);
+    invoer && (document.getElementById("invoer").classList.add("active"));
+    !invoer && (document.getElementById("zoeken").classList.add("active"));
+    invoer || document.getElementById("invoer").classList.remove("active");
+    invoer && document.getElementById("zoeken").classList.remove("active");
 }
 
-/* OPSLAAN / BIJWERKEN */
+/* AUTOMATISCH INVULLEN */
+artikelnummer.addEventListener("blur", async () => {
+    const snap = await getDocs(collection(db, "productie"));
+    snap.forEach(d => {
+        const data = d.data();
+        if (data.artikelnummer === artikelnummer.value) {
+            editId = d.id;
+            for (const key in data) {
+                if (document.getElementById(key)) {
+                    document.getElementById(key).value = data[key];
+                }
+            }
+            output.style.color = "blue";
+            output.innerText = "Bestaand artikel automatisch geladen";
+        }
+    });
+});
+
+/* OPSLAAN */
 window.opslaan = async () => {
     const data = {
         artikelnummer: artikelnummer.value,
@@ -222,67 +151,35 @@ window.opslaan = async () => {
         plaatsTussenleggers: plaatsTussenleggers.value
     };
 
-    if (!data.artikelnummer || !data.omschrijving) {
-        output.style.color = "red";
-        output.innerText = "Artikelnummer en omschrijving verplicht";
-        return;
-    }
-
     if (editId) {
         await updateDoc(doc(db, "productie", editId), data);
         output.innerText = "Artikel bijgewerkt";
         editId = null;
     } else {
         await addDoc(collection(db, "productie"), data);
-        output.innerText = "Artikel opgeslagen";
+        output.innerText = "Nieuw artikel opgeslagen";
     }
-
     output.style.color = "green";
 };
 
-/* ZOEKEN */
+/* ZOEKEN + VERWIJDEREN */
 window.zoekArtikel = async () => {
     resultaten.innerHTML = "";
     const zoek = zoekveld.value.toLowerCase();
     const snap = await getDocs(collection(db, "productie"));
-
     snap.forEach(d => {
         const data = d.data();
-        if (
-            data.artikelnummer.toLowerCase().includes(zoek) ||
-            data.omschrijving.toLowerCase().includes(zoek)
-        ) {
+        if (data.artikelnummer.toLowerCase().includes(zoek) ||
+            data.omschrijving.toLowerCase().includes(zoek)) {
             resultaten.innerHTML += `
             <div class="result">
-                <b>${data.artikelnummer}</b><br>
-                ${data.omschrijving}<br>
-                <button class="edit" onclick="bewerk('${d.id}')">Bewerk</button>
+                <b>${data.artikelnummer}</b><br>${data.omschrijving}<br>
                 <button class="delete" onclick="verwijder('${d.id}')">Verwijder</button>
             </div>`;
         }
     });
 };
 
-/* BEWERKEN */
-window.bewerk = async (id) => {
-    const snap = await getDocs(collection(db, "productie"));
-    snap.forEach(d => {
-        if (d.id === id) {
-            const data = d.data();
-            editId = id;
-            for (const key in data) {
-                if (document.getElementById(key)) {
-                    document.getElementById(key).value = data[key];
-                }
-            }
-            wisselTab(true);
-            output.style.color = "blue";
-            output.innerText = "Je bewerkt dit artikel";
-        }
-    });
-};
-
-/* VERWIJDEREN */
 window.verwijder = async (id) => {
     if (confirm("Artikel verwijderen?")) {
         await deleteDoc(doc(db, "productie", id));
