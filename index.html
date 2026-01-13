@@ -2,11 +2,125 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Productiedatabase</title>
+
+<style>
+body {
+    font-family: Arial;
+    background:#f5f5f5;
+    padding:20px;
+}
+
+.app {
+    max-width:420px;
+    margin:auto;
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+.title-bar {
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#28a745;
+    color:white;
+    padding:10px;
+    border-radius:8px;
+    margin-bottom:15px;
+}
+
+.title-bar img {
+    position:absolute;
+    left:10px;
+    height:40px;
+}
+
+.tab-buttons {
+    display:flex;
+    gap:10px;
+    margin-bottom:15px;
+}
+
+.tab-buttons button {
+    flex:1;
+    background:#e0e0e0;
+    border:none;
+    padding:8px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.tab-buttons button.active {
+    background:#28a745;
+    color:white;
+    font-weight:bold;
+}
+
+label {
+    font-weight:bold;
+    display:block;
+    margin-top:8px;
+}
+
+input {
+    width:100%;
+    padding:7px;
+    margin-top:3px;
+}
+
+button.main {
+    margin-top:15px;
+    width:100%;
+    padding:10px;
+    font-size:16px;
+    background:#28a745;
+    color:white;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.result-card {
+    border:1px solid #ccc;
+    border-radius:8px;
+    padding:10px;
+    margin-top:10px;
+}
+
+.omschrijving {
+    text-align:center;
+    font-weight:bold;
+    font-size:16px;
+    margin-bottom:8px;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<div class="title-bar">
+    <img src="ym.png" alt="YM">
+    <h2>Productiedatabase</h2>
+</div>
+
+<div class="tab-buttons">
+    <button id="tabInvoer" class="active">Invoer</button>
+    <button id="tabZoeken">Opzoeken</button>
+</div>
+
+<div id="invoerTab"></div>
+<div id="zoekTab" style="display:none"></div>
+
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBtV-MNtSxf7mJ5RM5dS_5MeRdpcOMy6a4",
@@ -19,141 +133,116 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const colRef = collection(db, "Productiedatabase");
+const colRef = collection(db,"Productiedatabase");
 
 let editId = null;
 
 const fields = [
-  { key:"artikelnummer", label:"Artikelnummer" },
-  { key:"omschrijving", label:"Omschrijving" },
-  { key:"blikinhoud", label:"Blikinhoud" },
-  { key:"deksel", label:"Deksel" },
-  { key:"blik", label:"Blik" },
-  { key:"verpakker1", label:"Verpakker 1" },
-  { key:"verpakker2", label:"Verpakker 2" },
-  { key:"tray", label:"Tray" },
-  { key:"wrap", label:"Wrap" },
-  { key:"hoeveelPerPak", label:"Hoeveel per pak" },
-  { key:"hoeveelPerTray", label:"Hoeveel per tray/doos" },
-  { key:"secundaireFolie", label:"Secundaire folie" },
-  { key:"tertiaireFolie", label:"Tertiaire folie" },
-  { key:"tertiaireTopfolie", label:"Tertiaire topfolie" },
-  { key:"pallet", label:"Pallet" },
-  { key:"tussenlegger", label:"Tussenlegger" },
-  { key:"stapelprogramma", label:"Stapelprogramma" },
-  { key:"aantalLagen", label:"Aantal lagen" },
-  { key:"hoeveelPerLaag", label:"Hoeveel per laag" }
+ {k:"artikelnummer",l:"Artikelnummer"},
+ {k:"omschrijving",l:"Omschrijving"},
+ {k:"blikinhoud",l:"Blikinhoud"},
+ {k:"deksel",l:"Deksel"},
+ {k:"blik",l:"Blik"},
+ {k:"verpakker1",l:"Verpakker 1"},
+ {k:"verpakker2",l:"Verpakker 2"},
+ {k:"tray",l:"Tray"},
+ {k:"wrap",l:"Wrap"},
+ {k:"hoeveelPerPak",l:"Hoeveel per pak"},
+ {k:"hoeveelPerTray",l:"Hoeveel per tray/doos"},
+ {k:"secundaireFolie",l:"Secundaire folie"},
+ {k:"tertiaireFolie",l:"Tertiaire folie"},
+ {k:"tertiaireTopfolie",l:"Tertiaire topfolie"},
+ {k:"pallet",l:"Pallet"},
+ {k:"tussenlegger",l:"Tussenlegger"},
+ {k:"stapelprogramma",l:"Stapelprogramma"},
+ {k:"aantalLagen",l:"Aantal lagen"},
+ {k:"hoeveelPerLaag",l:"Hoeveel per laag"}
 ];
 
-window.onload = () => {
-  const container = document.getElementById("formFields");
-  fields.forEach(f => {
-    const input = document.createElement("input");
-    input.id = f.key;
-    input.placeholder = f.label;
-    container.appendChild(input);
-  });
-};
+const invoer = document.getElementById("invoerTab");
+fields.forEach(f=>{
+    invoer.innerHTML += `<label>${f.l}</label><input id="${f.k}">`;
+});
+invoer.innerHTML += `<button class="main" onclick="save()">Opslaan</button>`;
 
-window.saveArticle = async () => {
-  let data = {};
-  fields.forEach(f => {
-    let val = document.getElementById(f.key).value.trim();
-    if (f.key !== "omschrijving") val = val.toUpperCase();
-    data[f.key] = val;
-  });
-
-  if (editId) {
-    await updateDoc(doc(db,"Productiedatabase",editId), data);
-    editId = null;
-  } else {
-    await addDoc(colRef, data);
-  }
-
-  fields.forEach(f => document.getElementById(f.key).value = "");
-  alert("Opgeslagen");
-};
-
-window.searchArticle = async () => {
-  const zoek = document.getElementById("zoek").value.trim().toUpperCase();
-  const result = document.getElementById("result");
-  result.innerHTML = "";
-
-  const snap = await getDocs(colRef);
-  snap.forEach(d => {
-    const data = d.data();
-    if (
-      data.artikelnummer?.includes(zoek) ||
-      data.omschrijving?.toUpperCase().includes(zoek)
-    ) {
-      let html = "<div class='card'>";
-
-      if (data.omschrijving) {
-        html += `<div class="omschrijving">${data.omschrijving}</div><hr>`;
-      }
-
-      fields.forEach(f => {
-        if (f.key === "omschrijving") return;
-        const val = data[f.key];
-        if (val) {
-          html += `<div><b>${f.label}:</b> ${val}</div>`;
-        }
-      });
-
-      html += `
-        <button onclick="editArticle('${d.id}')">Bewerken</button>
-        <button onclick="deleteArticle('${d.id}')">Verwijderen</button>
-      </div>`;
-      result.innerHTML += html;
-    }
-  });
-};
-
-window.editArticle = async (id) => {
-  const snap = await getDocs(colRef);
-  snap.forEach(d => {
-    if (d.id === id) {
-      editId = id;
-      const data = d.data();
-      fields.forEach(f => {
-        document.getElementById(f.key).value = data[f.key] || "";
-      });
-    }
-  });
-};
-
-window.deleteArticle = async (id) => {
-  if (confirm("Artikel verwijderen?")) {
-    await deleteDoc(doc(db,"Productiedatabase",id));
-    document.getElementById("result").innerHTML = "";
-  }
-};
-</script>
-
-<style>
-body { font-family: Arial; margin:20px }
-input { width:100%; margin-bottom:6px }
-.card { border:1px solid #ccc; padding:10px; margin-bottom:10px }
-.omschrijving { text-align:center; font-weight:bold; font-size:16px }
-button { margin-top:8px; margin-right:6px }
-</style>
-</head>
-
-<body>
-
-<h2>Productiedatabase</h2>
-
-<h3>Invoer</h3>
-<div id="formFields"></div>
-<button onclick="saveArticle()">Opslaan</button>
-
-<hr>
-
-<h3>Zoeken</h3>
-<input id="zoek" placeholder="Zoek op artikelnummer of omschrijving">
-<button onclick="searchArticle()">Zoek</button>
-
+document.getElementById("zoekTab").innerHTML = `
+<label>Zoek op artikelnummer of omschrijving</label>
+<input id="zoek">
+<button class="main" onclick="zoek()">Zoek</button>
 <div id="result"></div>
+`;
 
+window.save = async ()=>{
+ let data={}
+ fields.forEach(f=>{
+   let v=document.getElementById(f.k).value.trim()
+   if(f.k!=="omschrijving") v=v.toUpperCase()
+   data[f.k]=v
+ })
+ if(editId){
+   await updateDoc(doc(db,"Productiedatabase",editId),data)
+   editId=null
+ } else {
+   await addDoc(colRef,data)
+ }
+ fields.forEach(f=>document.getElementById(f.k).value="")
+ alert("Opgeslagen")
+}
+
+window.zoek = async ()=>{
+ const q=document.getElementById("zoek").value.toUpperCase()
+ const res=document.getElementById("result")
+ res.innerHTML=""
+ const snap=await getDocs(colRef)
+ snap.forEach(d=>{
+  const data=d.data()
+  if(data.artikelnummer?.includes(q)||data.omschrijving?.toUpperCase().includes(q)){
+   let html=`<div class="result-card">`
+   if(data.omschrijving) html+=`<div class="omschrijving">${data.omschrijving}</div><hr>`
+   fields.forEach(f=>{
+    if(f.k==="omschrijving") return
+    if(data[f.k]) html+=`<b>${f.l}:</b> ${data[f.k]}<br>`
+   })
+   html+=`
+   <button onclick="bewerk('${d.id}')">Bewerk</button>
+   <button onclick="verwijder('${d.id}')">Verwijder</button>
+   </div>`
+   res.innerHTML+=html
+  }
+ })
+}
+
+window.bewerk=async(id)=>{
+ const snap=await getDocs(colRef)
+ snap.forEach(d=>{
+  if(d.id===id){
+   editId=id
+   const data=d.data()
+   fields.forEach(f=>document.getElementById(f.k).value=data[f.k]||"")
+  }
+ })
+ document.getElementById("tabInvoer").click()
+}
+
+window.verwijder=async(id)=>{
+ if(confirm("Artikel verwijderen?")){
+  await deleteDoc(doc(db,"Productiedatabase",id))
+  document.getElementById("result").innerHTML=""
+ }
+}
+
+tabInvoer.onclick=()=>{
+ tabInvoer.classList.add("active")
+ tabZoeken.classList.remove("active")
+ invoerTab.style.display="block"
+ zoekTab.style.display="none"
+}
+tabZoeken.onclick=()=>{
+ tabZoeken.classList.add("active")
+ tabInvoer.classList.remove("active")
+ invoerTab.style.display="none"
+ zoekTab.style.display="block"
+}
+</script>
 </body>
 </html>
