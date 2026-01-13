@@ -2,307 +2,249 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Productiedatabase</title>
+
 <style>
 body {
-    font-family: Arial;
-    padding: 20px;
+    font-family: Arial, sans-serif;
     background: #f5f5f5;
+    margin: 0;
 }
-.app {
-    max-width: 700px;
-    margin: auto;
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-label {
+
+header {
+    background: #2e7d32;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    font-size: 24px;
     font-weight: bold;
-    display:block;
-    margin-top:10px;
 }
+
+.container {
+    padding: 20px;
+    max-width: 900px;
+    margin: auto;
+}
+
+.section {
+    background: white;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+}
+
+.section h2 {
+    margin-top: 0;
+    color: #2e7d32;
+}
+
+label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
 input {
     width: 100%;
-    padding: 8px;
-    margin-top:5px;
+    padding: 6px;
+    margin-top: 4px;
 }
+
 button {
-    padding: 10px;
-    width: 100%;
-    font-size: 16px;
-    margin-top:10px;
-    border: none;
-    border-radius: 10px;
-    background: #28a745;
-    color: white;
-    cursor:pointer;
-}
-#output {
     margin-top: 15px;
-    font-size: 16px;
-    color: green;
-}
-.tab-buttons {
-    display:flex;
-    gap:10px;
-    margin-bottom:15px;
-}
-.tab-buttons button {
-    flex:1;
-    font-size:16px;
-    background:#e0e0e0;
-    color:#333;
-    padding:8px;
-    border-radius:8px;
-    border:none;
-    cursor:pointer;
-}
-.tab-buttons button.active {
-    background:#28a745;
-    color:white;
-    font-weight:bold;
-}
-.title-bar {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #28a745;
+    padding: 10px;
+    background: #2e7d32;
     color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #256428;
+}
+
+.result {
+    background: #f1f8f4;
     padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 15px;
+    margin-top: 10px;
+    border-radius: 4px;
 }
-.title-bar img {
-    position: absolute;
-    left: 10px;
-    height: 50px;
-}
-.record-card {
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    padding: 10px;
-    margin-bottom: 15px;
-    background: #f9f9f9;
-}
-.record-card p {
-    margin: 3px 0;
+
+.output {
+    margin-top: 10px;
+    font-weight: bold;
 }
 </style>
 </head>
+
 <body>
-<div class="app">
 
-<div class="title-bar">
-    <img src="ym.png" alt="YM">
-    <h2>Productiedatabase</h2>
+<header>Productiedatabase</header>
+
+<div class="container">
+
+<div class="section">
+<h2>Artikel invoeren</h2>
+
+<label>Artikelnummer</label>
+<input id="artikelnummer">
+
+<label>Omschrijving</label>
+<input id="omschrijving">
+
+<label>Blikinhoud (liter)</label>
+<input id="blikinhoud" type="number">
+
+<label>Deksel</label>
+<input id="deksel">
+
+<label>Blik</label>
+<input id="blik">
+
+<label>Secundaire folie</label>
+<input id="secFolie">
+
+<label>Tertiaire folie</label>
+<input id="terFolie">
+
+<label>Tertiaire topfolie</label>
+<input id="topFolie">
+
+<label>Pallet</label>
+<input id="pallet">
+
+<label>Tussenlegger</label>
+<input id="tussenlegger">
+
+<label>Stapelprogramma</label>
+<input id="stapelprogramma">
+
+<label>Aantal lagen</label>
+<input id="aantalLagen" type="number">
+
+<label>Hoeveel per laag</label>
+<input id="perLaag" type="number">
+
+<label>Tray</label>
+<input id="tray">
+
+<label>Wrap</label>
+<input id="wrap">
+
+<label>Hoeveel per pak</label>
+<input id="perPak" type="number">
+
+<label>Hoeveel per tray / doos</label>
+<input id="perTray" type="number">
+
+<label>Plaats tussenleggers</label>
+<input id="plaatsTussenleggers">
+
+<button onclick="opslaan()">Opslaan</button>
+<div id="output" class="output"></div>
 </div>
 
-<div class="tab-buttons">
-    <button id="tab1" class="active">Invoer</button>
-    <button id="tab2">Overzicht</button>
+<div class="section">
+<h2>Artikel opzoeken</h2>
+
+<label>Zoek op artikelnummer OF omschrijving</label>
+<input id="zoekveld">
+
+<button onclick="zoekArtikel()">Zoeken</button>
+
+<div id="resultaten"></div>
 </div>
 
-<div id="tabContent">
-
-<!-- INVOER TAB -->
-<div id="inputTab">
-<label>Artikelnummer:</label>
-<input type="text" id="artikelnummer">
-
-<label>Omschrijving:</label>
-<input type="text" id="omschrijving">
-
-<label>Blikinhoud (cl):</label>
-<input type="number" id="blikinhoud">
-
-<label>Deksel:</label>
-<input type="text" id="deksel">
-
-<label>Blik:</label>
-<input type="text" id="blik">
-
-<label>Secundaire folie:</label>
-<input type="text" id="secFolie">
-
-<label>Tertiaire folie:</label>
-<input type="text" id="terFolie">
-
-<label>Tertiaire topfolie:</label>
-<input type="text" id="topFolie">
-
-<label>Pallet:</label>
-<input type="text" id="pallet">
-
-<label>Tussenlegger:</label>
-<input type="text" id="tussenlegger">
-
-<label>Stapelprogramma:</label>
-<input type="text" id="stapelprogramma">
-
-<label>Aantal lagen:</label>
-<input type="number" id="aantalLagen">
-
-<label>Hoeveel per laag:</label>
-<input type="number" id="perLaag">
-
-<label>Tray:</label>
-<input type="text" id="tray">
-
-<label>Wrap:</label>
-<input type="text" id="wrap">
-
-<label>Hoeveel per pak:</label>
-<input type="number" id="perPak">
-
-<label>Hoeveel per tray/doos:</label>
-<input type="number" id="perTray">
-
-<label>Plaats tussenleggers:</label>
-<input type="text" id="plaatsTussenleggers">
-
-<button type="button" onclick="opslaan()">Opslaan</button>
-<div id="output"></div>
-</div>
-
-<!-- OVERZICHT TAB -->
-<div id="overviewTab" style="display:none">
-<label>Artikelnummer zoeken:</label>
-<input type="text" id="filterArtikel" placeholder="Artikelnummer invoeren">
-<button type="button" onclick="laadArtikel()">Zoek</button>
-
-<div id="recordsContainer" style="margin-top:15px;"></div>
-</div>
-
-</div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics.js";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-// Firebase config
 const firebaseConfig = {
-  apiKey: "AIzaSyBtV-MNtSxf7mJ5RM5dS_5MeRdpcOMy6a4",
-  authDomain: "productiedatabase.firebaseapp.com",
-  projectId: "productiedatabase",
-  storageBucket: "productiedatabase.firebasestorage.app",
-  messagingSenderId: "269980901692",
-  appId: "1:269980901692:web:642b70f033694811817e39",
-  measurementId: "G-PR7CLHVM0T"
+    apiKey: "AIzaSyBtV-MNtSxf7mJ5RM5dS_5MeRdpcOMy6a4",
+    authDomain: "productiedatabase.firebaseapp.com",
+    projectId: "productiedatabase",
+    storageBucket: "productiedatabase.firebasestorage.app",
+    messagingSenderId: "269980901692",
+    appId: "1:269980901692:web:642b70f033694811817e39"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 const db = getFirestore(app);
 
-// TAB LOGICA
-const tab1 = document.getElementById("tab1");
-const tab2 = document.getElementById("tab2");
-const inputTab = document.getElementById("inputTab");
-const overviewTab = document.getElementById("overviewTab");
-
-tab1.onclick = () => {
-    tab1.classList.add("active"); tab2.classList.remove("active");
-    inputTab.style.display = "block"; overviewTab.style.display = "none";
-};
-tab2.onclick = () => {
-    tab2.classList.add("active"); tab1.classList.remove("active");
-    inputTab.style.display = "none"; overviewTab.style.display = "block";
-};
-
-// OPSLAAN FUNCTIE
-async function opslaan() {
+// OPSLAAN
+window.opslaan = async function () {
     const data = {
-        artikelnummer: document.getElementById("artikelnummer").value,
-        omschrijving: document.getElementById("omschrijving").value,
-        blikinhoud: parseFloat(document.getElementById("blikinhoud").value),
-        deksel: document.getElementById("deksel").value,
-        blik: document.getElementById("blik").value,
-        secFolie: document.getElementById("secFolie").value,
-        terFolie: document.getElementById("terFolie").value,
-        topFolie: document.getElementById("topFolie").value,
-        pallet: document.getElementById("pallet").value,
-        tussenlegger: document.getElementById("tussenlegger").value,
-        stapelprogramma: document.getElementById("stapelprogramma").value,
-        aantalLagen: parseInt(document.getElementById("aantalLagen").value),
-        perLaag: parseInt(document.getElementById("perLaag").value),
-        tray: document.getElementById("tray").value,
-        wrap: document.getElementById("wrap").value,
-        perPak: parseInt(document.getElementById("perPak").value),
-        perTray: parseInt(document.getElementById("perTray").value),
-        plaatsTussenleggers: document.getElementById("plaatsTussenleggers").value,
+        artikelnummer: artikelnummer.value,
+        omschrijving: omschrijving.value,
+        blikinhoud: blikinhoud.value,
+        deksel: deksel.value,
+        blik: blik.value,
+        secFolie: secFolie.value,
+        terFolie: terFolie.value,
+        topFolie: topFolie.value,
+        pallet: pallet.value,
+        tussenlegger: tussenlegger.value,
+        stapelprogramma: stapelprogramma.value,
+        aantalLagen: aantalLagen.value,
+        perLaag: perLaag.value,
+        tray: tray.value,
+        wrap: wrap.value,
+        perPak: perPak.value,
+        perTray: perTray.value,
+        plaatsTussenleggers: plaatsTussenleggers.value,
         timestamp: new Date()
     };
 
-    if(!data.artikelnummer || !data.omschrijving) {
-        alert("Artikelnummer en omschrijving zijn verplicht");
+    if (!data.artikelnummer || !data.omschrijving) {
+        output.innerText = "Artikelnummer en omschrijving zijn verplicht";
         return;
     }
 
-    try {
-        await addDoc(collection(db, "productie"), data);
-        document.getElementById("output").innerText = "Gegevens succesvol opgeslagen!";
-        inputTab.querySelectorAll("input").forEach(i => i.value = "");
-    } catch (e) {
-        console.error("Fout bij opslaan: ", e);
-        document.getElementById("output").innerText = "Fout bij opslaan, kijk console.";
-    }
-}
+    await addDoc(collection(db, "productie"), data);
+    output.innerText = "Artikel opgeslagen";
+};
 
-// LAAD SPECIFIEK ARTIKEL
-async function laadArtikel() {
-    const container = document.getElementById("recordsContainer");
-    container.innerHTML = "";
-    const filter = document.getElementById("filterArtikel").value.trim().toLowerCase();
-    if(!filter) {
-        alert("Voer een artikelnummer in.");
-        return;
-    }
+// ZOEKEN (artikelnummer OF omschrijving)
+window.zoekArtikel = async function () {
+    const zoek = zoekveld.value.toLowerCase();
+    resultaten.innerHTML = "";
 
-    const q = query(collection(db, "productie"), orderBy("timestamp","desc"));
-    const querySnapshot = await getDocs(q);
+    const snapshot = await getDocs(collection(db, "productie"));
 
-    let gevonden = false;
-
-    querySnapshot.forEach(doc => {
+    snapshot.forEach(doc => {
         const d = doc.data();
-        if(d.artikelnummer.toLowerCase() === filter) {
-            gevonden = true;
-            const card = document.createElement("div");
-            card.className = "record-card";
-            card.innerHTML = `
-                <p><b>Artikelnummer:</b> ${d.artikelnummer}</p>
-                <p><b>Omschrijving:</b> ${d.omschrijving}</p>
-                <p><b>Blikinhoud:</b> ${d.blikinhoud || ""}</p>
-                <p><b>Deksel:</b> ${d.deksel}</p>
-                <p><b>Blik:</b> ${d.blik}</p>
-                <p><b>Secundaire folie:</b> ${d.secFolie}</p>
-                <p><b>Tertiaire folie:</b> ${d.terFolie}</p>
-                <p><b>Topfolie:</b> ${d.topFolie}</p>
-                <p><b>Pallet:</b> ${d.pallet}</p>
-                <p><b>Tussenlegger:</b> ${d.tussenlegger}</p>
-                <p><b>Stapelprogramma:</b> ${d.stapelprogramma}</p>
-                <p><b>Aantal lagen:</b> ${d.aantalLagen || ""}</p>
-                <p><b>Hoeveel per laag:</b> ${d.perLaag || ""}</p>
-                <p><b>Tray:</b> ${d.tray}</p>
-                <p><b>Wrap:</b> ${d.wrap}</p>
-                <p><b>Hoeveel per pak:</b> ${d.perPak || ""}</p>
-                <p><b>Hoeveel per tray/doos:</b> ${d.perTray || ""}</p>
-                <p><b>Plaats tussenleggers:</b> ${d.plaatsTussenleggers}</p>
-            `;
-            container.appendChild(card);
+        if (
+            d.artikelnummer.toLowerCase().includes(zoek) ||
+            d.omschrijving.toLowerCase().includes(zoek)
+        ) {
+            resultaten.innerHTML += `
+            <div class="result">
+                <strong>Artikelnummer:</strong> ${d.artikelnummer}<br>
+                <strong>Omschrijving:</strong> ${d.omschrijving}<br>
+                <strong>Blikinhoud:</strong> ${d.blikinhoud}<br>
+                <strong>Deksel:</strong> ${d.deksel}<br>
+                <strong>Blik:</strong> ${d.blik}<br>
+                <strong>Secundaire folie:</strong> ${d.secFolie}<br>
+                <strong>Tertiaire folie:</strong> ${d.terFolie}<br>
+                <strong>Topfolie:</strong> ${d.topFolie}<br>
+                <strong>Pallet:</strong> ${d.pallet}<br>
+                <strong>Tussenlegger:</strong> ${d.tussenlegger}<br>
+                <strong>Stapelprogramma:</strong> ${d.stapelprogramma}<br>
+                <strong>Aantal lagen:</strong> ${d.aantalLagen}<br>
+                <strong>Per laag:</strong> ${d.perLaag}<br>
+                <strong>Tray:</strong> ${d.tray}<br>
+                <strong>Wrap:</strong> ${d.wrap}<br>
+                <strong>Per pak:</strong> ${d.perPak}<br>
+                <strong>Per tray:</strong> ${d.perTray}<br>
+                <strong>Plaats tussenleggers:</strong> ${d.plaatsTussenleggers}
+            </div>`;
         }
     });
-
-    if(!gevonden) {
-        container.innerHTML = "<p>Geen gegevens gevonden voor dit artikelnummer.</p>";
-    }
-}
+};
 </script>
+
 </body>
 </html>
