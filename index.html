@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Production Input</title>
+<title>Productiedatabase</title>
 <style>
 body {
     font-family: Arial;
@@ -103,56 +103,56 @@ th {
 
 <div class="title-bar">
     <img src="ym.png" alt="YM">
-    <h2>Production Input</h2>
+    <h2>Productiedatabase</h2>
 </div>
 
 <div class="tab-buttons">
-    <button id="tab1" class="active">Input</button>
-    <button id="tab2">Overview</button>
+    <button id="tab1" class="active">Invoer</button>
+    <button id="tab2">Overzicht</button>
 </div>
 
 <div id="tabContent">
 
-<!-- INPUT TAB -->
+<!-- INVOER TAB -->
 <div id="inputTab">
-<label>Item Number:</label>
-<input type="text" id="itemNumber">
+<label>Artikelnummer:</label>
+<input type="text" id="artikelnummer">
 
-<label>Description:</label>
-<input type="text" id="description">
+<label>Omschrijving:</label>
+<input type="text" id="omschrijving">
 
-<label>Can Volume (cl):</label>
-<input type="number" id="canVolume">
+<label>Blikinhoud (cl):</label>
+<input type="number" id="blikinhoud">
 
-<label>Lid:</label>
-<input type="text" id="lid">
+<label>Deksel:</label>
+<input type="text" id="deksel">
 
-<label>Can:</label>
-<input type="text" id="can">
+<label>Blik:</label>
+<input type="text" id="blik">
 
-<label>Secondary Wrap:</label>
-<input type="text" id="secondaryWrap">
+<label>Secundaire folie:</label>
+<input type="text" id="secFolie">
 
-<label>Tertiary Wrap:</label>
-<input type="text" id="tertiaryWrap">
+<label>Tertiaire folie:</label>
+<input type="text" id="terFolie">
 
-<label>Top Wrap:</label>
-<input type="text" id="topWrap">
+<label>Tertiaire topfolie:</label>
+<input type="text" id="topFolie">
 
 <label>Pallet:</label>
 <input type="text" id="pallet">
 
-<label>Interlayer:</label>
-<input type="text" id="interlayer">
+<label>Tussenlegger:</label>
+<input type="text" id="tussenlegger">
 
-<label>Stack Program:</label>
-<input type="text" id="stackProgram">
+<label>Stapelprogramma:</label>
+<input type="text" id="stapelprogramma">
 
-<label>Number of Layers:</label>
-<input type="number" id="numberOfLayers">
+<label>Aantal lagen:</label>
+<input type="number" id="aantalLagen">
 
-<label>Per Layer:</label>
-<input type="number" id="perLayer">
+<label>Hoeveel per laag:</label>
+<input type="number" id="perLaag">
 
 <label>Tray:</label>
 <input type="text" id="tray">
@@ -160,46 +160,46 @@ th {
 <label>Wrap:</label>
 <input type="text" id="wrap">
 
-<label>Per Pack:</label>
-<input type="number" id="perPack">
+<label>Hoeveel per pak:</label>
+<input type="number" id="perPak">
 
-<label>Per Tray/Box:</label>
+<label>Hoeveel per tray/doos:</label>
 <input type="number" id="perTray">
 
-<label>Interlayer Position:</label>
-<input type="text" id="interlayerPosition">
+<label>Plaats tussenleggers:</label>
+<input type="text" id="plaatsTussenleggers">
 
-<button type="button" onclick="saveData()">Save</button>
+<button type="button" onclick="opslaan()">Opslaan</button>
 <div id="output"></div>
 </div>
 
-<!-- OVERVIEW TAB -->
+<!-- OVERZICHT TAB -->
 <div id="overviewTab" style="display:none">
-    <label>Filter by Item Number:</label>
-    <input type="text" id="filterItem" placeholder="Enter item number">
-    <button type="button" onclick="loadData()">Apply Filter</button>
+    <label>Filter op artikelnummer:</label>
+    <input type="text" id="filterArtikel" placeholder="Artikelnummer invoeren">
+    <button type="button" onclick="laadRecords()">Toepassen filter</button>
 
     <table>
         <thead>
             <tr>
-                <th>Item Number</th>
-                <th>Description</th>
-                <th>Can Volume</th>
-                <th>Lid</th>
-                <th>Can</th>
-                <th>Secondary Wrap</th>
-                <th>Tertiary Wrap</th>
-                <th>Top Wrap</th>
+                <th>Artikel</th>
+                <th>Omschrijving</th>
+                <th>Blikinhoud</th>
+                <th>Deksel</th>
+                <th>Blik</th>
+                <th>Sec. folie</th>
+                <th>Ter. folie</th>
+                <th>Topfolie</th>
                 <th>Pallet</th>
-                <th>Interlayer</th>
-                <th>Stack Program</th>
-                <th>Number of Layers</th>
-                <th>Per Layer</th>
+                <th>Tussenlegger</th>
+                <th>Stapelprog.</th>
+                <th>Lagen</th>
+                <th>Per laag</th>
                 <th>Tray</th>
                 <th>Wrap</th>
-                <th>Per Pack</th>
-                <th>Per Tray/Box</th>
-                <th>Interlayer Position</th>
+                <th>Per pak</th>
+                <th>Per tray/doos</th>
+                <th>Plaats tussenleggers</th>
             </tr>
         </thead>
         <tbody id="recordsTable"></tbody>
@@ -209,13 +209,12 @@ th {
 </div>
 </div>
 
-<!-- Firebase v12 Modules -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics.js";
 import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-// Firebase configuration
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyBtV-MNtSxf7mJ5RM5dS_5MeRdpcOMy6a4",
   authDomain: "productiedatabase.firebaseapp.com",
@@ -244,26 +243,84 @@ tab1.onclick = () => {
 tab2.onclick = () => {
     tab2.classList.add("active"); tab1.classList.remove("active");
     inputTab.style.display = "none"; overviewTab.style.display = "block";
-    loadData();
+    laadRecords();
 };
 
-// SAVE DATA FUNCTION
-async function saveData() {
+// OPSLAAN FUNCTIE
+async function opslaan() {
     const data = {
-        itemNumber: document.getElementById("itemNumber").value,
-        description: document.getElementById("description").value,
-        canVolume: parseFloat(document.getElementById("canVolume").value),
-        lid: document.getElementById("lid").value,
-        can: document.getElementById("can").value,
-        secondaryWrap: document.getElementById("secondaryWrap").value,
-        tertiaryWrap: document.getElementById("tertiaryWrap").value,
-        topWrap: document.getElementById("topWrap").value,
+        artikelnummer: document.getElementById("artikelnummer").value,
+        omschrijving: document.getElementById("omschrijving").value,
+        blikinhoud: parseFloat(document.getElementById("blikinhoud").value),
+        deksel: document.getElementById("deksel").value,
+        blik: document.getElementById("blik").value,
+        secFolie: document.getElementById("secFolie").value,
+        terFolie: document.getElementById("terFolie").value,
+        topFolie: document.getElementById("topFolie").value,
         pallet: document.getElementById("pallet").value,
-        interlayer: document.getElementById("interlayer").value,
-        stackProgram: document.getElementById("stackProgram").value,
-        numberOfLayers: parseInt(document.getElementById("numberOfLayers").value),
-        perLayer: parseInt(document.getElementById("perLayer").value),
+        tussenlegger: document.getElementById("tussenlegger").value,
+        stapelprogramma: document.getElementById("stapelprogramma").value,
+        aantalLagen: parseInt(document.getElementById("aantalLagen").value),
+        perLaag: parseInt(document.getElementById("perLaag").value),
         tray: document.getElementById("tray").value,
         wrap: document.getElementById("wrap").value,
-        perPack: parseInt(document.getElementById("perPack").value),
-        perTray: parseInt(document.ge
+        perPak: parseInt(document.getElementById("perPak").value),
+        perTray: parseInt(document.getElementById("perTray").value),
+        plaatsTussenleggers: document.getElementById("plaatsTussenleggers").value,
+        timestamp: new Date()
+    };
+
+    if(!data.artikelnummer || !data.omschrijving) {
+        alert("Artikelnummer en omschrijving zijn verplicht");
+        return;
+    }
+
+    try {
+        await addDoc(collection(db, "productie"), data);
+        document.getElementById("output").innerText = "Gegevens succesvol opgeslagen!";
+        inputTab.querySelectorAll("input").forEach(i => i.value = "");
+    } catch (e) {
+        console.error("Fout bij opslaan: ", e);
+        document.getElementById("output").innerText = "Fout bij opslaan, kijk console.";
+    }
+}
+
+// RECORDS LADEN + FILTER
+async function laadRecords() {
+    const tbody = document.getElementById("recordsTable");
+    tbody.innerHTML = "";
+    const filter = document.getElementById("filterArtikel").value.trim().toLowerCase();
+
+    const q = query(collection(db, "productie"), orderBy("timestamp","desc"));
+    const querySnapshot = await getDocs(q);
+
+    querySnapshot.forEach(doc => {
+        const d = doc.data();
+        if(filter && !d.artikelnummer.toLowerCase().includes(filter)) return;
+
+        const row = `<tr>
+            <td>${d.artikelnummer}</td>
+            <td>${d.omschrijving}</td>
+            <td>${d.blikinhoud || ""}</td>
+            <td>${d.deksel}</td>
+            <td>${d.blik}</td>
+            <td>${d.secFolie}</td>
+            <td>${d.terFolie}</td>
+            <td>${d.topFolie}</td>
+            <td>${d.pallet}</td>
+            <td>${d.tussenlegger}</td>
+            <td>${d.stapelprogramma}</td>
+            <td>${d.aantalLagen || ""}</td>
+            <td>${d.perLaag || ""}</td>
+            <td>${d.tray}</td>
+            <td>${d.wrap}</td>
+            <td>${d.perPak || ""}</td>
+            <td>${d.perTray || ""}</td>
+            <td>${d.plaatsTussenleggers}</td>
+        </tr>`;
+        tbody.innerHTML += row;
+    });
+}
+</script>
+</body>
+</html>
