@@ -6,13 +6,12 @@
 <title>Productiedatabase</title>
 
 <style>
-body {
-    font-family: Arial;
+body{
+    font-family:Arial;
     background:#f5f5f5;
     padding:20px;
 }
-
-.app {
+.app{
     max-width:450px;
     margin:auto;
     background:white;
@@ -20,8 +19,7 @@ body {
     border-radius:12px;
     box-shadow:0 4px 10px rgba(0,0,0,0.1);
 }
-
-.title-bar {
+.title-bar{
     position:relative;
     display:flex;
     align-items:center;
@@ -32,20 +30,17 @@ body {
     border-radius:8px;
     margin-bottom:15px;
 }
-
-.title-bar img {
+.title-bar img{
     position:absolute;
     left:10px;
     height:40px;
 }
-
-.tab-buttons {
+.tab-buttons{
     display:flex;
     gap:10px;
     margin-bottom:15px;
 }
-
-.tab-buttons button {
+.tab-buttons button{
     flex:1;
     background:#e0e0e0;
     border:none;
@@ -53,36 +48,26 @@ body {
     border-radius:8px;
     cursor:pointer;
 }
-
-.tab-buttons button.active {
+.tab-buttons button.active{
     background:#28a745;
     color:white;
     font-weight:bold;
 }
-
-label {
+label{
     font-weight:bold;
     display:block;
     margin-top:8px;
 }
-
-input {
+input{
     width:100%;
     padding:7px;
     margin-top:3px;
     border:1px solid #ccc;
     border-radius:4px;
 }
-
-input.new-article {
-    border-color:green;
-}
-
-input.existing-article {
-    border-color:red;
-}
-
-button.main {
+input.new{border:2px solid green;}
+input.exists{border:2px solid red;}
+button.main{
     margin-top:15px;
     width:100%;
     padding:10px;
@@ -93,20 +78,19 @@ button.main {
     border-radius:8px;
     cursor:pointer;
 }
-
-.result-card {
+.result-card{
     border:1px solid #ccc;
     border-radius:8px;
     padding:10px;
     margin-top:10px;
 }
-
-.omschrijving {
+.omschrijving{
     text-align:center;
     font-weight:bold;
     font-size:16px;
     margin-bottom:8px;
 }
+hr{margin:6px 0;}
 </style>
 </head>
 
@@ -120,7 +104,7 @@ button.main {
 
 <div class="tab-buttons">
     <button id="tabInvoer" class="active">Invoer</button>
-    <button id="tabZoeken">Opzoeken</button>
+    <button id="tabZoek">Opzoeken</button>
 </div>
 
 <div id="invoerTab"></div>
@@ -132,23 +116,22 @@ button.main {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBtV-MNtSxf7mJ5RM5dS_5MeRdpcOMy6a4",
-  authDomain: "productiedatabase.firebaseapp.com",
-  projectId: "productiedatabase",
-  storageBucket: "productiedatabase.firebasestorage.app",
-  messagingSenderId: "269980901692",
-  appId: "1:269980901692:web:642b70f033694811817e39"
+const firebaseConfig={
+ apiKey:"AIzaSyBtV-MNtSxf7mJ5RM5dS_5MeRdpcOMy6a4",
+ authDomain:"productiedatabase.firebaseapp.com",
+ projectId:"productiedatabase",
+ storageBucket:"productiedatabase.firebasestorage.app",
+ messagingSenderId:"269980901692",
+ appId:"1:269980901692:web:642b70f033694811817e39"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const colRef = collection(db,"Productiedatabase");
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+const colRef=collection(db,"Productiedatabase");
 
-let editId = null;
+let editId=null;
 
-// Alle velden
-const fields = [
+const fields=[
  {k:"artikelnummer",l:"Artikelnummer"},
  {k:"omschrijving",l:"Omschrijving"},
  {k:"blikinhoud",l:"Blikinhoud"},
@@ -165,145 +148,125 @@ const fields = [
  {k:"tertiaireTopfolie",l:"Tertiaire topfolie"},
  {k:"pallet",l:"Pallet"},
  {k:"tussenlegger",l:"Tussenlegger"},
+ {k:"plaatsingTussenleggers",l:"Plaatsing tussenleggers"},
  {k:"stapelprogramma",l:"Stapelprogramma"},
  {k:"aantalLagen",l:"Aantal lagen"},
  {k:"hoeveelPerLaag",l:"Hoeveel per laag"}
 ];
 
-// Invoer-tab
-const invoer = document.getElementById("invoerTab");
+// Invoer
+const invoer=document.getElementById("invoerTab");
 fields.forEach(f=>{
-    invoer.innerHTML += `<label>${f.l}</label><input id="${f.k}">`;
+ invoer.innerHTML+=`<label>${f.l}</label><input id="${f.k}">`;
 });
-invoer.innerHTML += `<button class="main" onclick="save()">Opslaan</button>`;
+invoer.innerHTML+=`<button class="main" onclick="save()">Opslaan</button>`;
 
-// Zoek-tab
-document.getElementById("zoekTab").innerHTML = `
+// Zoeken
+document.getElementById("zoekTab").innerHTML=`
 <label>Zoek op artikelnummer of omschrijving</label>
 <input id="zoek">
 <button class="main" onclick="zoek()">Zoek</button>
-<div id="result"></div>
-`;
+<div id="result"></div>`;
 
-// Live autofill bij typen in artikelnummer
-document.getElementById("artikelnummer").addEventListener("input", async (e)=>{
-  const val = e.target.value.trim().toUpperCase();
-  let inputField = e.target;
-  if(!val){
-    fields.forEach(f=>{
-      if(f.k!=="artikelnummer") document.getElementById(f.k).value = "";
-    });
-    editId = null;
-    inputField.classList.remove("existing-article","new-article");
-    return;
+// Live autofill
+document.getElementById("artikelnummer").addEventListener("input",async e=>{
+ const val=e.target.value.trim().toUpperCase();
+ e.target.value=val;
+ e.target.classList.remove("new","exists");
+ if(!val){
+  fields.forEach(f=>{if(f.k!=="artikelnummer")document.getElementById(f.k).value=""});
+  editId=null; return;
+ }
+ const snap=await getDocs(colRef);
+ let found=false;
+ snap.forEach(d=>{
+  const data=d.data();
+  if((data.artikelnummer||"").toUpperCase()===val){
+   editId=d.id; found=true;
+   fields.forEach(f=>document.getElementById(f.k).value=data[f.k]||"");
   }
-  const snap = await getDocs(colRef);
-  let found = false;
-  snap.forEach(d=>{
-    const data = d.data();
-    if(data.artikelnummer?.toUpperCase() === val){
-      editId = d.id;
-      found = true;
-      fields.forEach(f=>{
-        if(f.k!=="artikelnummer") document.getElementById(f.k).value = data[f.k]||"";
-      });
-    }
-  });
-  if(found){
-    inputField.classList.add("existing-article");
-    inputField.classList.remove("new-article");
-  } else {
-    editId = null;
-    fields.forEach(f=>{
-      if(f.k!=="artikelnummer") document.getElementById(f.k).value = "";
-    });
-    inputField.classList.add("new-article");
-    inputField.classList.remove("existing-article");
-  }
+ });
+ if(found) e.target.classList.add("exists");
+ else e.target.classList.add("new");
 });
 
 // Opslaan
-window.save = async ()=>{
- let data={}
+window.save=async()=>{
+ let data={};
  fields.forEach(f=>{
-   let v=document.getElementById(f.k).value.trim()
-   if(f.k!=="omschrijving") v=v.toUpperCase()
-   data[f.k]=v
- })
- if(editId){
-   await updateDoc(doc(db,"Productiedatabase",editId),data)
-   editId=null
- } else {
-   await addDoc(colRef,data)
- }
- fields.forEach(f=>document.getElementById(f.k).value="")
- document.getElementById("artikelnummer").classList.remove("existing-article","new-article");
- alert("Opgeslagen")
-}
+  let v=document.getElementById(f.k).value.trim();
+  if(f.k!=="omschrijving") v=v.toUpperCase();
+  data[f.k]=v;
+ });
+ if(editId) await updateDoc(doc(db,"Productiedatabase",editId),data);
+ else await addDoc(colRef,data);
+ fields.forEach(f=>document.getElementById(f.k).value="");
+ document.getElementById("artikelnummer").classList.remove("new","exists");
+ editId=null;
+ alert("Opgeslagen");
+};
 
 // Zoeken
-window.zoek = async ()=>{
- const q=document.getElementById("zoek").value.trim().toUpperCase()
- const res=document.getElementById("result")
- res.innerHTML=""
- if(!q) return
- const snap=await getDocs(colRef)
+window.zoek=async()=>{
+ const q=document.getElementById("zoek").value.trim().toUpperCase();
+ const res=document.getElementById("result");
+ res.innerHTML="";
+ if(!q) return;
+ const snap=await getDocs(colRef);
  snap.forEach(d=>{
-   const data=d.data()
-   if(data.artikelnummer?.toUpperCase().includes(q) || data.omschrijving?.toUpperCase().includes(q)){
-     let html=`<div class="result-card">`
-     if(data.omschrijving) html+=`<div class="omschrijving">${data.omschrijving}</div><hr>`
-     fields.forEach(f=>{
-       if(f.k==="omschrijving") return
-       if(data[f.k]) html+=`<b>${f.l}:</b> ${data[f.k]}<br>`
-     })
-     html+=`<button onclick="bewerk('${d.id}')">Bewerk</button> 
-            <button onclick="verwijder('${d.id}')">Verwijder</button>`
-     html+=`</div>`
-     res.innerHTML+=html
-   }
- })
-}
+  const data=d.data();
+  if((data.artikelnummer||"").toUpperCase().includes(q) || (data.omschrijving||"").toUpperCase().includes(q)){
+   let html=`<div class="result-card">`;
+   if(data.omschrijving) html+=`<div class="omschrijving">${data.omschrijving}</div><hr>`;
+   fields.forEach(f=>{
+    if(f.k!=="omschrijving" && data[f.k]) html+=`<b>${f.l}:</b> ${data[f.k]}<br>`;
+   });
+   html+=`<button onclick="bewerk('${d.id}')">Bewerk</button>
+          <button onclick="verwijder('${d.id}')">Verwijder</button></div>`;
+   res.innerHTML+=html;
+  }
+ });
+};
 
 // Bewerken
 window.bewerk=async(id)=>{
- const snap=await getDocs(colRef)
+ const snap=await getDocs(colRef);
  snap.forEach(d=>{
   if(d.id===id){
-   editId=id
-   const data=d.data()
-   fields.forEach(f=>document.getElementById(f.k).value=data[f.k]||"")
+   editId=id;
+   const data=d.data();
+   fields.forEach(f=>document.getElementById(f.k).value=data[f.k]||"");
   }
- })
- tabInvoer.click()
-}
+ });
+ tabInvoer.click();
+};
 
 // Verwijderen
 window.verwijder=async(id)=>{
  if(confirm("Artikel verwijderen?")){
-  await deleteDoc(doc(db,"Productiedatabase",id))
-  document.getElementById("result").innerHTML=""
+  await deleteDoc(doc(db,"Productiedatabase",id));
+  document.getElementById("result").innerHTML="";
  }
-}
+};
 
 // Tabs
-const tabInvoer = document.getElementById("tabInvoer")
-const tabZoeken = document.getElementById("tabZoeken")
-const invoerTab = document.getElementById("invoerTab")
-const zoekTab = document.getElementById("zoekTab")
+const tabInvoer=document.getElementById("tabInvoer");
+const tabZoek=document.getElementById("tabZoek");
+const invoerTab=document.getElementById("invoerTab");
+const zoekTab=document.getElementById("zoekTab");
 
 tabInvoer.onclick=()=>{
- tabInvoer.classList.add("active")
- tabZoeken.classList.remove("active")
- invoerTab.style.display="block"
- zoekTab.style.display="none"
-}
-tabZoeken.onclick=()=>{
- tabZoeken.classList.add("active")
- tabInvoer.classList.remove("active")
- invoerTab.style.display="none"
- zoekTab.style.display="block"
-}
+ tabInvoer.classList.add("active");
+ tabZoek.classList.remove("active");
+ invoerTab.style.display="block";
+ zoekTab.style.display="none";
+};
+tabZoek.onclick=()=>{
+ tabZoek.classList.add("active");
+ tabInvoer.classList.remove("active");
+ invoerTab.style.display="none";
+ zoekTab.style.display="block";
+};
 </script>
 </body>
 </html>
