@@ -92,6 +92,10 @@ button.main{
 }
 hr{margin:6px 0;}
 </style>
+
+<!-- OCR -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
 </head>
 
 <body>
@@ -159,7 +163,12 @@ const invoer=document.getElementById("invoerTab");
 fields.forEach(f=>{
  invoer.innerHTML+=`<label>${f.l}</label><input id="${f.k}">`;
 });
-invoer.innerHTML+=`<button class="main" onclick="save()">Opslaan</button>`;
+
+invoer.innerHTML+=`
+<button class="main" onclick="save()">Opslaan</button>
+<button class="main" style="background:#007bff" onclick="scanBlad()">📷 Scan productieblad</button>
+<input type="file" id="scanInput" accept="image/*" capture="environment" style="display:none">
+`;
 
 // Zoeken
 document.getElementById("zoekTab").innerHTML=`
@@ -168,7 +177,7 @@ document.getElementById("zoekTab").innerHTML=`
 <button class="main" onclick="zoek()">Zoek</button>
 <div id="result"></div>`;
 
-// Live autofill
+// Live autofill artikelnummer
 document.getElementById("artikelnummer").addEventListener("input",async e=>{
  const val=e.target.value.trim().toUpperCase();
  e.target.value=val;
@@ -205,6 +214,63 @@ window.save=async()=>{
  editId=null;
  alert("Opgeslagen");
 };
+
+// Scan knop
+window.scanBlad=()=>{
+ document.getElementById("scanInput").click();
+};
+
+// OCR lezen
+document.getElementById("scanInput").addEventListener("change",async e=>{
+ const file=e.target.files[0];
+ if(!file) return;
+
+ alert("Scan bezig...");
+
+ const { data:{text} } = await Tesseract.recognize(file,"eng");
+
+ vulVeldenUitTekst(text);
+});
+
+// Helpers
+function set(id,val){
+ if(val) document.getElementById(id).value=val;
+}
+
+function vulVeldenUitTekst(t){
+
+ const art=t.match(/Art\\.?\\s*Nr\\.?\\s*[:]?\\s*(\\d+)/i);
+ if(art) set("artikelnummer",art[1]);
+
+ const oms=t.match(/\\d+\\s+([A-Za-z].+)/);
+ if(oms) set("omschrijving",oms[1]);
+
+ set("deksel",vind("DEKSEL",t));
+ set("blik",vind("BLIK",t));
+ set("secundaireFolie",vind("SECUNDAIR",t));
+ set("tertiaireFolie",vind("TERTIAIR",t));
+ set("tertiaireTopfolie",vind("TOPFOL",t));
+ set("pallet",vind("PALLET",t));
+ set("tussenlegger",vind("TUSSENLEGGER",t));
+
+ const pl=t.match(/Plaatsing tussenleggers[:\\s]*([0-9\\-]+)/i);
+ if(pl) set("plaatsingTussenleggers",pl[1]);
+
+ const lagen=t.match(/(\\d+)\\s*Lagen/i);
+ if(lagen) set("aantalLagen",lagen[1]);
+
+ const perlaag=t.match(/(\\d+)\\s*\\/\\s*Laag/i);
+ if(perlaag) set("hoeveelPerLaag",perlaag[1]);
+
+ const stapel=t.match(/Patr[:\\s]*(\\d+)/i);
+ if(stapel) set("stapelprogramma",stapel[1]);
+}
+
+function vind(label,text){
+ const r=new RegExp(label+"[:\\s]*([^\\n]+)","i");
+ const m=text.match(r);
+ return m?m[1].trim():"";
+}
 
 // Zoeken
 window.zoek=async()=>{
