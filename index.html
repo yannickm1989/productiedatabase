@@ -93,9 +93,7 @@ button.main{
 hr{margin:6px 0;}
 </style>
 
-<!-- OCR -->
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-
 </head>
 
 <body>
@@ -158,49 +156,21 @@ const fields=[
  {k:"hoeveelPerLaag",l:"Hoeveel per laag"}
 ];
 
-// Invoer
+// ---- UI bouwen
 const invoer=document.getElementById("invoerTab");
+
 fields.forEach(f=>{
  invoer.innerHTML+=`<label>${f.l}</label><input id="${f.k}">`;
 });
 
 invoer.innerHTML+=`
-<button class="main" onclick="save()">Opslaan</button>
-<button class="main" style="background:#007bff" onclick="scanBlad()">📷 Scan productieblad</button>
+<button class="main" id="saveBtn">Opslaan</button>
+<button class="main" id="scanBtn" style="background:#007bff">📷 Scan productieblad</button>
 <input type="file" id="scanInput" accept="image/*" capture="environment" style="display:none">
 `;
 
-// Zoeken
-document.getElementById("zoekTab").innerHTML=`
-<label>Zoek op artikelnummer of omschrijving</label>
-<input id="zoek">
-<button class="main" onclick="zoek()">Zoek</button>
-<div id="result"></div>`;
-
-// Live autofill artikelnummer
-document.getElementById("artikelnummer").addEventListener("input",async e=>{
- const val=e.target.value.trim().toUpperCase();
- e.target.value=val;
- e.target.classList.remove("new","exists");
- if(!val){
-  fields.forEach(f=>{if(f.k!=="artikelnummer")document.getElementById(f.k).value=""});
-  editId=null; return;
- }
- const snap=await getDocs(colRef);
- let found=false;
- snap.forEach(d=>{
-  const data=d.data();
-  if((data.artikelnummer||"").toUpperCase()===val){
-   editId=d.id; found=true;
-   fields.forEach(f=>document.getElementById(f.k).value=data[f.k]||"");
-  }
- });
- if(found) e.target.classList.add("exists");
- else e.target.classList.add("new");
-});
-
-// Opslaan
-window.save=async()=>{
+// ---- Functies GLOBAAL maken
+window.save = async ()=>{
  let data={};
  fields.forEach(f=>{
   let v=document.getElementById(f.k).value.trim();
@@ -215,12 +185,15 @@ window.save=async()=>{
  alert("Opgeslagen");
 };
 
-// Scan knop
-window.scanBlad=()=>{
+window.scanBlad = ()=>{
  document.getElementById("scanInput").click();
 };
 
-// OCR lezen
+// ---- Buttons koppelen
+document.getElementById("saveBtn").onclick = window.save;
+document.getElementById("scanBtn").onclick = window.scanBlad;
+
+// ---- OCR
 document.getElementById("scanInput").addEventListener("change",async e=>{
  const file=e.target.files[0];
  if(!file) return;
@@ -232,13 +205,18 @@ document.getElementById("scanInput").addEventListener("change",async e=>{
  vulVeldenUitTekst(text);
 });
 
-// Helpers
+// ---- Helpers
 function set(id,val){
  if(val) document.getElementById(id).value=val;
 }
 
-function vulVeldenUitTekst(t){
+function vind(label,text){
+ const r=new RegExp(label+"[:\\s]*([^\\n]+)","i");
+ const m=text.match(r);
+ return m?m[1].trim():"";
+}
 
+function vulVeldenUitTekst(t){
  const art=t.match(/Art\\.?\\s*Nr\\.?\\s*[:]?\\s*(\\d+)/i);
  if(art) set("artikelnummer",art[1]);
 
@@ -266,14 +244,14 @@ function vulVeldenUitTekst(t){
  if(stapel) set("stapelprogramma",stapel[1]);
 }
 
-function vind(label,text){
- const r=new RegExp(label+"[:\\s]*([^\\n]+)","i");
- const m=text.match(r);
- return m?m[1].trim():"";
-}
+// ---- Zoek tab
+document.getElementById("zoekTab").innerHTML=`
+<label>Zoek op artikelnummer of omschrijving</label>
+<input id="zoek">
+<button class="main" id="zoekBtn">Zoek</button>
+<div id="result"></div>`;
 
-// Zoeken
-window.zoek=async()=>{
+window.zoek = async ()=>{
  const q=document.getElementById("zoek").value.trim().toUpperCase();
  const res=document.getElementById("result");
  res.innerHTML="";
@@ -287,33 +265,13 @@ window.zoek=async()=>{
    fields.forEach(f=>{
     if(f.k!=="omschrijving" && data[f.k]) html+=`<b>${f.l}:</b> ${data[f.k]}<br>`;
    });
-   html+=`<button onclick="bewerk('${d.id}')">Bewerk</button>
-          <button onclick="verwijder('${d.id}')">Verwijder</button></div>`;
+   html+=`</div>`;
    res.innerHTML+=html;
   }
  });
 };
 
-// Bewerken
-window.bewerk=async(id)=>{
- const snap=await getDocs(colRef);
- snap.forEach(d=>{
-  if(d.id===id){
-   editId=id;
-   const data=d.data();
-   fields.forEach(f=>document.getElementById(f.k).value=data[f.k]||"");
-  }
- });
- tabInvoer.click();
-};
-
-// Verwijderen
-window.verwijder=async(id)=>{
- if(confirm("Artikel verwijderen?")){
-  await deleteDoc(doc(db,"Productiedatabase",id));
-  document.getElementById("result").innerHTML="";
- }
-};
+document.getElementById("zoekBtn").onclick = window.zoek;
 
 // Tabs
 const tabInvoer=document.getElementById("tabInvoer");
