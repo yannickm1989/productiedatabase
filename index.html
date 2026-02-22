@@ -6,222 +6,129 @@
 <title>Productiedatabase</title>
 
 <style>
-body{
-    font-family:Arial;
-    background:#f5f5f5;
-    padding:20px;
-}
-.app{
-    max-width:450px;
-    margin:auto;
-    background:white;
-    padding:20px;
-    border-radius:12px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.1);
-}
-.title-bar{
-    position:relative;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:#28a745;
-    color:white;
-    padding:10px;
-    border-radius:8px;
-    margin-bottom:15px;
-}
-.title-bar img{
-    position:absolute;
-    left:10px;
-    height:40px;
-}
-.tab-buttons{
-    display:flex;
-    gap:10px;
-    margin-bottom:15px;
-}
-.tab-buttons button{
-    flex:1;
-    background:#e0e0e0;
-    border:none;
-    padding:8px;
-    border-radius:8px;
-    cursor:pointer;
-}
-.tab-buttons button.active{
-    background:#28a745;
-    color:white;
-    font-weight:bold;
-}
-label{
-    font-weight:bold;
-    display:block;
-    margin-top:8px;
-}
-input{
-    width:100%;
-    padding:7px;
-    margin-top:3px;
-    border:1px solid #ccc;
-    border-radius:4px;
-}
-input.new{border:2px solid green;}
-input.exists{border:2px solid red;}
-button.main{
-    margin-top:15px;
-    width:100%;
-    padding:10px;
-    font-size:16px;
-    background:#28a745;
-    color:white;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-}
-.result-card{
-    border:1px solid #ccc;
-    border-radius:8px;
-    padding:10px;
-    margin-top:10px;
-}
-.omschrijving{
-    text-align:center;
-    font-weight:bold;
-    font-size:16px;
-    margin-bottom:8px;
-}
-hr{margin:6px 0;}
+body{font-family:Arial;background:#f5f5f5;padding:20px}
+.app{max-width:450px;margin:auto;background:white;padding:20px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.1)}
+.title-bar{position:relative;display:flex;align-items:center;justify-content:center;background:#28a745;color:white;padding:10px;border-radius:8px;margin-bottom:15px}
+.title-bar img{position:absolute;left:10px;height:40px}
+.tab-buttons{display:flex;gap:10px;margin-bottom:15px}
+.tab-buttons button{flex:1;background:#e0e0e0;border:none;padding:8px;border-radius:8px;cursor:pointer}
+.tab-buttons button.active{background:#28a745;color:white;font-weight:bold}
+label{font-weight:bold;display:block;margin-top:8px}
+input{width:100%;padding:7px;margin-top:3px;border:1px solid #ccc;border-radius:4px}
+button.main{margin-top:15px;width:100%;padding:10px;font-size:16px;background:#28a745;color:white;border:none;border-radius:8px;cursor:pointer}
+.result-card{border:1px solid #ccc;border-radius:8px;padding:10px;margin-top:10px}
+.omschrijving{text-align:center;font-weight:bold;font-size:16px;margin-bottom:8px}
 </style>
 
+<!-- Firebase compat -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
+<!-- OCR -->
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 
 <body>
 <div class="app">
-
 <div class="title-bar">
-    <img src="ym.png" alt="YM">
-    <h2>Productiedatabase</h2>
+<img src="ym.png">
+<h2>Productiedatabase</h2>
 </div>
 
 <div class="tab-buttons">
-    <button id="tabInvoer" class="active">Invoer</button>
-    <button id="tabZoek">Opzoeken</button>
+<button id="tabInvoer" class="active">Invoer</button>
+<button id="tabZoek">Opzoeken</button>
 </div>
 
 <div id="invoerTab"></div>
 <div id="zoekTab" style="display:none"></div>
-
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
-
+<script>
+// Firebase
 const firebaseConfig={
  apiKey:"AIzaSyBtV-MNtSxf7mJ5RM5dS_5MeRdpcOMy6a4",
  authDomain:"productiedatabase.firebaseapp.com",
- projectId:"productiedatabase",
- storageBucket:"productiedatabase.firebasestorage.app",
- messagingSenderId:"269980901692",
- appId:"1:269980901692:web:642b70f033694811817e39"
+ projectId:"productiedatabase"
 };
-
-const app=initializeApp(firebaseConfig);
-const db=getFirestore(app);
-const colRef=collection(db,"Productiedatabase");
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+const colRef=db.collection("Productiedatabase");
 
 let editId=null;
 
 const fields=[
- {k:"artikelnummer",l:"Artikelnummer"},
- {k:"omschrijving",l:"Omschrijving"},
- {k:"blikinhoud",l:"Blikinhoud"},
- {k:"deksel",l:"Deksel"},
- {k:"blik",l:"Blik"},
- {k:"verpakker1",l:"Verpakker 1"},
- {k:"verpakker2",l:"Verpakker 2"},
- {k:"tray",l:"Tray"},
- {k:"wrap",l:"Wrap"},
- {k:"hoeveelPerPak",l:"Hoeveel per pak"},
- {k:"hoeveelPerTray",l:"Hoeveel per tray/doos"},
- {k:"secundaireFolie",l:"Secundaire folie"},
- {k:"tertiaireFolie",l:"Tertiaire folie"},
- {k:"tertiaireTopfolie",l:"Tertiaire topfolie"},
- {k:"pallet",l:"Pallet"},
- {k:"tussenlegger",l:"Tussenlegger"},
- {k:"plaatsingTussenleggers",l:"Plaatsing tussenleggers"},
- {k:"stapelprogramma",l:"Stapelprogramma"},
- {k:"aantalLagen",l:"Aantal lagen"},
- {k:"hoeveelPerLaag",l:"Hoeveel per laag"}
+["artikelnummer","Artikelnummer"],
+["omschrijving","Omschrijving"],
+["blikinhoud","Blikinhoud"],
+["deksel","Deksel"],
+["blik","Blik"],
+["verpakker1","Verpakker 1"],
+["verpakker2","Verpakker 2"],
+["tray","Tray"],
+["wrap","Wrap"],
+["hoeveelPerPak","Hoeveel per pak"],
+["hoeveelPerTray","Hoeveel per tray/doos"],
+["secundaireFolie","Secundaire folie"],
+["tertiaireFolie","Tertiaire folie"],
+["tertiaireTopfolie","Tertiaire topfolie"],
+["pallet","Pallet"],
+["tussenlegger","Tussenlegger"],
+["plaatsingTussenleggers","Plaatsing tussenleggers"],
+["stapelprogramma","Stapelprogramma"],
+["aantalLagen","Aantal lagen"],
+["hoeveelPerLaag","Hoeveel per laag"]
 ];
 
-// ---- UI bouwen
+// UI bouwen
 const invoer=document.getElementById("invoerTab");
-
 fields.forEach(f=>{
- invoer.innerHTML+=`<label>${f.l}</label><input id="${f.k}">`;
+ invoer.innerHTML+=`<label>${f[1]}</label><input id="${f[0]}">`;
 });
-
 invoer.innerHTML+=`
 <button class="main" id="saveBtn">Opslaan</button>
 <button class="main" id="scanBtn" style="background:#007bff">📷 Scan productieblad</button>
 <input type="file" id="scanInput" accept="image/*" capture="environment" style="display:none">
 `;
 
-// ---- Functies GLOBAAL maken
-window.save = async ()=>{
+// Opslaan
+document.getElementById("saveBtn").onclick=async()=>{
  let data={};
  fields.forEach(f=>{
-  let v=document.getElementById(f.k).value.trim();
-  if(f.k!=="omschrijving") v=v.toUpperCase();
-  data[f.k]=v;
+  let v=document.getElementById(f[0]).value.trim();
+  if(f[0]!=="omschrijving") v=v.toUpperCase();
+  data[f[0]]=v;
  });
- if(editId) await updateDoc(doc(db,"Productiedatabase",editId),data);
- else await addDoc(colRef,data);
- fields.forEach(f=>document.getElementById(f.k).value="");
- document.getElementById("artikelnummer").classList.remove("new","exists");
- editId=null;
+ if(editId) await colRef.doc(editId).set(data);
+ else await colRef.add(data);
  alert("Opgeslagen");
 };
 
-window.scanBlad = ()=>{
+// Scan
+document.getElementById("scanBtn").onclick=()=>{
  document.getElementById("scanInput").click();
 };
 
-// ---- Buttons koppelen
-document.getElementById("saveBtn").onclick = window.save;
-document.getElementById("scanBtn").onclick = window.scanBlad;
-
-// ---- OCR
 document.getElementById("scanInput").addEventListener("change",async e=>{
  const file=e.target.files[0];
  if(!file) return;
-
  alert("Scan bezig...");
-
- const { data:{text} } = await Tesseract.recognize(file,"eng");
-
- vulVeldenUitTekst(text);
+ const {data:{text}}=await Tesseract.recognize(file,"eng");
+ vulVelden(text);
 });
 
-// ---- Helpers
-function set(id,val){
- if(val) document.getElementById(id).value=val;
-}
-
-function vind(label,text){
- const r=new RegExp(label+"[:\\s]*([^\\n]+)","i");
- const m=text.match(r);
+function set(id,val){if(val)document.getElementById(id).value=val}
+function vind(label,t){
+ const m=t.match(new RegExp(label+"[:\\s]*([^\\n]+)","i"));
  return m?m[1].trim():"";
 }
 
-function vulVeldenUitTekst(t){
- const art=t.match(/Art\\.?\\s*Nr\\.?\\s*[:]?\\s*(\\d+)/i);
- if(art) set("artikelnummer",art[1]);
+function vulVelden(t){
+ const art=t.match(/Art\\.?\\s*Nr\\.?\\s*(\\d+)/i);
+ if(art)set("artikelnummer",art[1]);
 
  const oms=t.match(/\\d+\\s+([A-Za-z].+)/);
- if(oms) set("omschrijving",oms[1]);
+ if(oms)set("omschrijving",oms[1]);
 
  set("deksel",vind("DEKSEL",t));
  set("blik",vind("BLIK",t));
@@ -231,47 +138,37 @@ function vulVeldenUitTekst(t){
  set("pallet",vind("PALLET",t));
  set("tussenlegger",vind("TUSSENLEGGER",t));
 
- const pl=t.match(/Plaatsing tussenleggers[:\\s]*([0-9\\-]+)/i);
- if(pl) set("plaatsingTussenleggers",pl[1]);
-
  const lagen=t.match(/(\\d+)\\s*Lagen/i);
- if(lagen) set("aantalLagen",lagen[1]);
+ if(lagen)set("aantalLagen",lagen[1]);
 
  const perlaag=t.match(/(\\d+)\\s*\\/\\s*Laag/i);
- if(perlaag) set("hoeveelPerLaag",perlaag[1]);
-
- const stapel=t.match(/Patr[:\\s]*(\\d+)/i);
- if(stapel) set("stapelprogramma",stapel[1]);
+ if(perlaag)set("hoeveelPerLaag",perlaag[1]);
 }
 
-// ---- Zoek tab
+// Zoek tab
 document.getElementById("zoekTab").innerHTML=`
 <label>Zoek op artikelnummer of omschrijving</label>
 <input id="zoek">
 <button class="main" id="zoekBtn">Zoek</button>
 <div id="result"></div>`;
 
-window.zoek = async ()=>{
- const q=document.getElementById("zoek").value.trim().toUpperCase();
+document.getElementById("zoekBtn").onclick=async()=>{
+ const q=document.getElementById("zoek").value.toUpperCase();
  const res=document.getElementById("result");
  res.innerHTML="";
- if(!q) return;
- const snap=await getDocs(colRef);
+ const snap=await colRef.get();
  snap.forEach(d=>{
   const data=d.data();
-  if((data.artikelnummer||"").toUpperCase().includes(q) || (data.omschrijving||"").toUpperCase().includes(q)){
-   let html=`<div class="result-card">`;
-   if(data.omschrijving) html+=`<div class="omschrijving">${data.omschrijving}</div><hr>`;
+  if((data.artikelnummer||"").includes(q)||(data.omschrijving||"").includes(q)){
+   let html=`<div class="result-card"><div class="omschrijving">${data.omschrijving||""}</div><hr>`;
    fields.forEach(f=>{
-    if(f.k!=="omschrijving" && data[f.k]) html+=`<b>${f.l}:</b> ${data[f.k]}<br>`;
+    if(f[0]!=="omschrijving"&&data[f[0]])html+=`<b>${f[1]}:</b> ${data[f[0]]}<br>`;
    });
-   html+=`</div>`;
+   html+="</div>";
    res.innerHTML+=html;
   }
  });
 };
-
-document.getElementById("zoekBtn").onclick = window.zoek;
 
 // Tabs
 const tabInvoer=document.getElementById("tabInvoer");
@@ -279,18 +176,8 @@ const tabZoek=document.getElementById("tabZoek");
 const invoerTab=document.getElementById("invoerTab");
 const zoekTab=document.getElementById("zoekTab");
 
-tabInvoer.onclick=()=>{
- tabInvoer.classList.add("active");
- tabZoek.classList.remove("active");
- invoerTab.style.display="block";
- zoekTab.style.display="none";
-};
-tabZoek.onclick=()=>{
- tabZoek.classList.add("active");
- tabInvoer.classList.remove("active");
- invoerTab.style.display="none";
- zoekTab.style.display="block";
-};
+tabInvoer.onclick=()=>{tabInvoer.classList.add("active");tabZoek.classList.remove("active");invoerTab.style.display="block";zoekTab.style.display="none"}
+tabZoek.onclick=()=>{tabZoek.classList.add("active");tabInvoer.classList.remove("active");invoerTab.style.display="none";zoekTab.style.display="block"}
 </script>
 </body>
 </html>
