@@ -121,12 +121,11 @@ hr{margin:6px 0;}
 
 </div>
 
-<!-- OCR -->
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
 const firebaseConfig={
  apiKey:"AIzaSyBtV-MNtSxf7mJ5RM5dS_5MeRdpcOMy6a4",
@@ -163,7 +162,7 @@ const fields=[
  {k:"hoeveelPerLaag",l:"Hoeveel per laag"}
 ];
 
-// invoer velden
+// invoer
 const invoer=document.getElementById("invoerTab");
 
 invoer.innerHTML+=`
@@ -178,14 +177,7 @@ fields.forEach(f=>{
 
 invoer.innerHTML+=`<button class="main" onclick="save()">Opslaan</button>`;
 
-// zoeken
-document.getElementById("zoekTab").innerHTML=`
-<label>Zoek op artikelnummer of omschrijving</label>
-<input id="zoek">
-<button class="main" onclick="zoek()">Zoek</button>
-<div id="result"></div>`;
-
-// OCR scan
+// scan
 window.startScan=()=>{
  document.getElementById("scanInput").click();
 };
@@ -194,50 +186,65 @@ document.getElementById("scanInput").addEventListener("change", async e=>{
  const file=e.target.files[0];
  if(!file) return;
 
- const { data:{ text } } = await Tesseract.recognize(file,"eng");
- const t=text.toUpperCase();
+ const img=new Image();
+ img.src=URL.createObjectURL(file);
 
- function find(label){
-  const i=t.indexOf(label);
-  if(i===-1) return "";
-  return t.substring(i+label.length, i+label.length+40)
-          .split("\n")[0]
-          .replace(/[:\-]/g,"")
-          .trim();
- }
+ img.onload=async()=>{
+  const zones={
+   artikelnummer:[0.05,0.08,0.4,0.08],
+   omschrijving:[0.05,0.16,0.6,0.10],
+   blikinhoud:[0.70,0.16,0.25,0.08],
+   deksel:[0.05,0.30,0.4,0.08],
+   blik:[0.55,0.30,0.4,0.08],
+   verpakker1:[0.05,0.40,0.4,0.08],
+   verpakker2:[0.55,0.40,0.4,0.08],
+   hoeveelPerPak:[0.05,0.52,0.4,0.08],
+   secundaireFolie:[0.55,0.52,0.4,0.08],
+   tertiaireFolie:[0.05,0.62,0.4,0.08],
+   tertiaireTopfolie:[0.55,0.62,0.4,0.08],
+   pallet:[0.05,0.74,0.4,0.08],
+   tussenlegger:[0.55,0.74,0.4,0.08],
+   plaatsingTussenleggers:[0.05,0.84,0.4,0.08],
+   stapelprogramma:[0.55,0.84,0.4,0.08],
+   aantalLagen:[0.05,0.92,0.4,0.08],
+   hoeveelPerLaag:[0.55,0.92,0.4,0.08]
+  };
 
- const map={
-  artikelnummer:find("ARTIKELNUMMER"),
-  omschrijving:find("PRODUCT"),
-  blikinhoud:find("INHOUD"),
-  deksel:find("DEKSEL"),
-  blik:find("BLIK"),
-  verpakker1:find("VERPAKKER"),
-  verpakker2:find("VERPAKKER 2"),
-  hoeveelPerPak:find("AANTAL PER"),
-  secundaireFolie:find("SECUNDAIRE"),
-  tertiaireFolie:find("TERTIAIRE FOLIE"),
-  tertiaireTopfolie:find("TOPFOLIE"),
-  pallet:find("PALLET"),
-  tussenlegger:find("TUSSENLEGGER"),
-  plaatsingTussenleggers:find("PLAATSING"),
-  stapelprogramma:find("STAPEL"),
-  aantalLagen:find("LAGEN"),
-  hoeveelPerLaag:find("PER LAAG")
- };
+  for(const key in zones){
+   const [x,y,w,h]=zones[key];
 
- for(const k in map){
-  if(map[k] && document.getElementById(k)){
-   document.getElementById(k).value=map[k];
+   const canvas=document.createElement("canvas");
+   canvas.width=img.width*w;
+   canvas.height=img.height*h;
+
+   const ctx=canvas.getContext("2d");
+   ctx.drawImage(
+    img,
+    img.width*x,
+    img.height*y,
+    img.width*w,
+    img.height*h,
+    0,0,
+    canvas.width,
+    canvas.height
+   );
+
+   const { data:{ text } } =
+     await Tesseract.recognize(canvas,"eng");
+
+   const val=text.replace(/[\n:]/g," ").trim();
+
+   if(val && document.getElementById(key)){
+    document.getElementById(key).value=val;
+   }
   }
- }
+ };
 });
 
 // handmatig
 window.clearFields=()=>{
  fields.forEach(f=>{
-  const el=document.getElementById(f.k);
-  if(el) el.value="";
+  document.getElementById(f.k).value="";
  });
 };
 
@@ -254,7 +261,13 @@ window.save=async()=>{
  alert("Opgeslagen");
 };
 
-// zoek
+// zoeken
+document.getElementById("zoekTab").innerHTML=`
+<label>Zoek op artikelnummer of omschrijving</label>
+<input id="zoek">
+<button class="main" onclick="zoek()">Zoek</button>
+<div id="result"></div>`;
+
 window.zoek=async()=>{
  const q=document.getElementById("zoek").value.trim().toUpperCase();
  const res=document.getElementById("result");
