@@ -191,24 +191,24 @@ document.getElementById("scanInput").addEventListener("change", async e=>{
 
  img.onload=async()=>{
   const zones={
-   artikelnummer:[0.05,0.08,0.4,0.08],
-   omschrijving:[0.05,0.16,0.6,0.10],
-   blikinhoud:[0.70,0.16,0.25,0.08],
-   deksel:[0.05,0.30,0.4,0.08],
-   blik:[0.55,0.30,0.4,0.08],
-   verpakker1:[0.05,0.40,0.4,0.08],
-   verpakker2:[0.55,0.40,0.4,0.08],
-   hoeveelPerPak:[0.05,0.52,0.4,0.08],
-   secundaireFolie:[0.55,0.52,0.4,0.08],
-   tertiaireFolie:[0.05,0.62,0.4,0.08],
-   tertiaireTopfolie:[0.55,0.62,0.4,0.08],
-   pallet:[0.05,0.74,0.4,0.08],
-   tussenlegger:[0.55,0.74,0.4,0.08],
-   plaatsingTussenleggers:[0.05,0.84,0.4,0.08],
-   stapelprogramma:[0.55,0.84,0.4,0.08],
-   aantalLagen:[0.05,0.92,0.4,0.08],
-   hoeveelPerLaag:[0.55,0.92,0.4,0.08]
-  };
+ artikelnummer:[0.03,0.05,0.45,0.08],
+ omschrijving:[0.03,0.13,0.70,0.12],
+ blikinhoud:[0.75,0.13,0.22,0.08],
+ deksel:[0.03,0.28,0.45,0.08],
+ blik:[0.52,0.28,0.45,0.08],
+ verpakker1:[0.03,0.38,0.45,0.08],
+ verpakker2:[0.52,0.38,0.45,0.08],
+ hoeveelPerPak:[0.03,0.50,0.45,0.08],
+ secundaireFolie:[0.52,0.50,0.45,0.08],
+ tertiaireFolie:[0.03,0.60,0.45,0.08],
+ tertiaireTopfolie:[0.52,0.60,0.45,0.08],
+ pallet:[0.03,0.72,0.45,0.08],
+ tussenlegger:[0.52,0.72,0.45,0.08],
+ plaatsingTussenleggers:[0.03,0.82,0.45,0.08],
+ stapelprogramma:[0.52,0.82,0.45,0.08],
+ aantalLagen:[0.03,0.90,0.45,0.08],
+ hoeveelPerLaag:[0.52,0.90,0.45,0.08]
+};
 
   for(const key in zones){
    const [x,y,w,h]=zones[key];
