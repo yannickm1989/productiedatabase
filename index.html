@@ -5,109 +5,295 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Productiedatabase</title>
 
-<script src="https://unpkg.com/tesseract.js@4/dist/tesseract.min.js"></script>
-
 <style>
-body { font-family: Arial; margin:0; }
-header { background:#1976d2; color:white; padding:15px; font-size:20px; }
-button { padding:12px; margin:5px; font-size:16px; }
-.section { display:none; padding:15px; }
+body{
+    font-family:Arial;
+    background:#f5f5f5;
+    padding:20px;
+}
+.app{
+    max-width:450px;
+    margin:auto;
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+.title-bar{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#28a745;
+    color:white;
+    padding:10px;
+    border-radius:8px;
+    margin-bottom:15px;
+}
+.title-bar img{
+    position:absolute;
+    left:10px;
+    height:40px;
+}
+.tab-buttons{
+    display:flex;
+    gap:10px;
+    margin-bottom:15px;
+}
+.tab-buttons button{
+    flex:1;
+    background:#e0e0e0;
+    border:none;
+    padding:8px;
+    border-radius:8px;
+    cursor:pointer;
+}
+.tab-buttons button.active{
+    background:#28a745;
+    color:white;
+    font-weight:bold;
+}
+label{
+    font-weight:bold;
+    display:block;
+    margin-top:8px;
+}
+input{
+    width:100%;
+    padding:7px;
+    margin-top:3px;
+    border:1px solid #ccc;
+    border-radius:4px;
+}
+button.main{
+    margin-top:15px;
+    width:100%;
+    padding:10px;
+    font-size:16px;
+    background:#28a745;
+    color:white;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+.scan-btn{
+    margin-top:10px;
+    width:100%;
+    padding:8px;
+    font-size:14px;
+    background:#007bff;
+    color:white;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+.result-card{
+    border:1px solid #ccc;
+    border-radius:8px;
+    padding:10px;
+    margin-top:10px;
+}
+.omschrijving{
+    text-align:center;
+    font-weight:bold;
+    font-size:16px;
+    margin-bottom:8px;
+}
+hr{margin:6px 0;}
 </style>
 </head>
 
 <body>
+<div class="app">
 
-<header>Productiedatabase</header>
-
-<div id="home">
-<button onclick="showSection('invoer')">Invoer</button>
-<button onclick="showSection('opzoeken')">Opzoeken</button>
+<div class="title-bar">
+    <img src="ym.png" alt="YM">
+    <h2>Productiedatabase</h2>
 </div>
 
-<!-- INVOER -->
-<div id="invoer" class="section">
+<div class="tab-buttons">
+    <button id="tabInvoer" class="active">Invoer</button>
+    <button id="tabZoek">Opzoeken</button>
+</div>
 
-<h3>Nieuwe invoer</h3>
+<div id="invoerTab"></div>
+<div id="zoekTab" style="display:none"></div>
 
-<button onclick="startScan()">📷 Scan blad</button>
+</div>
+
+<!-- OCR -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+const firebaseConfig={
+ apiKey:"AIzaSyBtV-MNtSxf7mJ5RM5dS_5MeRdpcOMy6a4",
+ authDomain:"productiedatabase.firebaseapp.com",
+ projectId:"productiedatabase",
+ storageBucket:"productiedatabase.firebasestorage.app",
+ messagingSenderId:"269980901692",
+ appId:"1:269980901692:web:642b70f033694811817e39"
+};
+
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+const colRef=collection(db,"Productiedatabase");
+
+let editId=null;
+
+const fields=[
+ {k:"artikelnummer",l:"Artikelnummer"},
+ {k:"omschrijving",l:"Omschrijving"},
+ {k:"blikinhoud",l:"Blikinhoud"},
+ {k:"deksel",l:"Deksel"},
+ {k:"blik",l:"Blik"},
+ {k:"verpakker1",l:"Verpakker 1"},
+ {k:"verpakker2",l:"Verpakker 2"},
+ {k:"hoeveelPerPak",l:"Hoeveel per pak"},
+ {k:"secundaireFolie",l:"Secundaire folie"},
+ {k:"tertiaireFolie",l:"Tertiaire folie"},
+ {k:"tertiaireTopfolie",l:"Tertiaire topfolie"},
+ {k:"pallet",l:"Pallet"},
+ {k:"tussenlegger",l:"Tussenlegger"},
+ {k:"plaatsingTussenleggers",l:"Plaatsing tussenleggers"},
+ {k:"stapelprogramma",l:"Stapelprogramma"},
+ {k:"aantalLagen",l:"Aantal lagen"},
+ {k:"hoeveelPerLaag",l:"Hoeveel per laag"}
+];
+
+// invoer velden
+const invoer=document.getElementById("invoerTab");
+
+invoer.innerHTML+=`
 <input type="file" id="scanInput" accept="image/*" capture="environment" style="display:none">
+<button class="scan-btn" onclick="startScan()">📷 Scan productieblad</button>
+<button class="scan-btn" onclick="clearFields()">✍️ Handmatig invoeren</button>
+`;
 
-<br><br>
-
-<input id="product" placeholder="Product"><br>
-<input id="kleur" placeholder="Kleur"><br>
-<input id="batch" placeholder="Batch"><br>
-<input id="operator" placeholder="Operator"><br>
-<input id="datum" placeholder="Datum"><br>
-
-<br>
-<button onclick="saveData()">Opslaan</button>
-<button onclick="showSection('home')">Terug</button>
-
-</div>
-
-<!-- OPZOEKEN -->
-<div id="opzoeken" class="section">
-<h3>Opzoeken</h3>
-<button onclick="showSection('home')">Terug</button>
-</div>
-
-<script>
-
-function showSection(id){
-document.getElementById('home').style.display='none';
-document.getElementById('invoer').style.display='none';
-document.getElementById('opzoeken').style.display='none';
-
-if(id==='home'){
-document.getElementById('home').style.display='block';
-}else{
-document.getElementById(id).style.display='block';
-}
-}
-
-// ===== SCAN =====
-function startScan(){
-document.getElementById('scanInput').click();
-}
-
-document.getElementById('scanInput').addEventListener('change', function(e){
-const file = e.target.files[0];
-if(!file) return;
-
-Tesseract.recognize(file,'eng')
-.then(result=>{
-const text = result.data.text;
-
-fillField('product', text);
-fillField('kleur', text);
-fillField('batch', text);
-fillField('operator', text);
-fillField('datum', text);
-
-alert("Scan ingevuld ✔");
-});
+fields.forEach(f=>{
+ invoer.innerHTML+=`<label>${f.l}</label><input id="${f.k}">`;
 });
 
-function fillField(id,text){
-const el=document.getElementById(id);
-const label=el.placeholder.toLowerCase();
+invoer.innerHTML+=`<button class="main" onclick="save()">Opslaan</button>`;
 
-const lines=text.split('\n');
-for(const line of lines){
-if(line.toLowerCase().includes(label)){
-el.value=line.split(':').pop().trim();
-}
-}
-}
+// zoeken
+document.getElementById("zoekTab").innerHTML=`
+<label>Zoek op artikelnummer of omschrijving</label>
+<input id="zoek">
+<button class="main" onclick="zoek()">Zoek</button>
+<div id="result"></div>`;
 
-// ===== DUMMY SAVE =====
-function saveData(){
-alert("Opslaan (Firestore blijft jouw bestaande code)");
-}
+// OCR scan
+window.startScan=()=>{
+ document.getElementById("scanInput").click();
+};
 
-showSection('home');
+document.getElementById("scanInput").addEventListener("change", async e=>{
+ const file=e.target.files[0];
+ if(!file) return;
 
+ const { data:{ text } } = await Tesseract.recognize(file,"eng");
+ const t=text.toUpperCase();
+
+ function find(label){
+  const i=t.indexOf(label);
+  if(i===-1) return "";
+  return t.substring(i+label.length, i+label.length+40)
+          .split("\n")[0]
+          .replace(/[:\-]/g,"")
+          .trim();
+ }
+
+ const map={
+  artikelnummer:find("ARTIKELNUMMER"),
+  omschrijving:find("PRODUCT"),
+  blikinhoud:find("INHOUD"),
+  deksel:find("DEKSEL"),
+  blik:find("BLIK"),
+  verpakker1:find("VERPAKKER"),
+  verpakker2:find("VERPAKKER 2"),
+  hoeveelPerPak:find("AANTAL PER"),
+  secundaireFolie:find("SECUNDAIRE"),
+  tertiaireFolie:find("TERTIAIRE FOLIE"),
+  tertiaireTopfolie:find("TOPFOLIE"),
+  pallet:find("PALLET"),
+  tussenlegger:find("TUSSENLEGGER"),
+  plaatsingTussenleggers:find("PLAATSING"),
+  stapelprogramma:find("STAPEL"),
+  aantalLagen:find("LAGEN"),
+  hoeveelPerLaag:find("PER LAAG")
+ };
+
+ for(const k in map){
+  if(map[k] && document.getElementById(k)){
+   document.getElementById(k).value=map[k];
+  }
+ }
+});
+
+// handmatig
+window.clearFields=()=>{
+ fields.forEach(f=>{
+  const el=document.getElementById(f.k);
+  if(el) el.value="";
+ });
+};
+
+// save
+window.save=async()=>{
+ let data={};
+ fields.forEach(f=>{
+  data[f.k]=document.getElementById(f.k).value.trim();
+ });
+ if(editId) await updateDoc(doc(db,"Productiedatabase",editId),data);
+ else await addDoc(colRef,data);
+
+ fields.forEach(f=>document.getElementById(f.k).value="");
+ alert("Opgeslagen");
+};
+
+// zoek
+window.zoek=async()=>{
+ const q=document.getElementById("zoek").value.trim().toUpperCase();
+ const res=document.getElementById("result");
+ res.innerHTML="";
+ if(!q) return;
+
+ const snap=await getDocs(colRef);
+ snap.forEach(d=>{
+  const data=d.data();
+  if((data.artikelnummer||"").toUpperCase().includes(q) || (data.omschrijving||"").toUpperCase().includes(q)){
+   let html=`<div class="result-card">`;
+   if(data.omschrijving) html+=`<div class="omschrijving">${data.omschrijving}</div><hr>`;
+   fields.forEach(f=>{
+    if(f.k!=="omschrijving" && data[f.k]) html+=`<b>${f.l}:</b> ${data[f.k]}<br>`;
+   });
+   html+=`</div>`;
+   res.innerHTML+=html;
+  }
+ });
+};
+
+// tabs
+const tabInvoer=document.getElementById("tabInvoer");
+const tabZoek=document.getElementById("tabZoek");
+const invoerTab=document.getElementById("invoerTab");
+const zoekTab=document.getElementById("zoekTab");
+
+tabInvoer.onclick=()=>{
+ tabInvoer.classList.add("active");
+ tabZoek.classList.remove("active");
+ invoerTab.style.display="block";
+ zoekTab.style.display="none";
+};
+tabZoek.onclick=()=>{
+ tabZoek.classList.add("active");
+ tabInvoer.classList.remove("active");
+ invoerTab.style.display="none";
+ zoekTab.style.display="block";
+};
 </script>
 </body>
 </html>
